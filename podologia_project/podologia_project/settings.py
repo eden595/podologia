@@ -81,8 +81,8 @@ USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 STATIC_URL = 'static/'
-STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')] # Opcional si usas estáticos globales
-
+STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static'),] 
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 # Media Files (Para las fotos de los tratamientos)
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
