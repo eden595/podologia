@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Podología Paola Baeza</title>
+    <style>
+        /* RESET TOTAL PARA EVITAR QUE SE VEA "HORRIBLE" */
+        * { box-sizing: border-box; }
+        
+        body {
+            background-color: #121212 !important; /* Negro fondo */
+            color: #e0e0e0 !important;
+            font-family: 'Segoe UI', sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
+
+        /* CONTENEDOR PLOMO OVALADO */
+        .contenedor-principal {
+            background-color: #2c2c2c !important; /* Plomo */
+            border-radius: 50px !important; /* Muy ovalado */
+            padding: 40px;
+            border: 1px solid #444;
+            max-width: 1100px;
+            margin: 20px auto;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        /* NAVBAR OVALADA */
+        .navbar-ovalada {
+            background-color: #2c2c2c;
+            border-radius: 60px;
+            padding: 15px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid #444;
+            margin-bottom: 20px;
+        }
+
+        /* BOTÓN CERRAR SESIÓN (CORREGIDO PARA DJANGO 5+) */
+        .btn-logout {
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            padding: 10px 25px;
+            border-radius: 50px; /* Ovalado */
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        /* FORZAR TODOS LOS BOTONES E INPUTS A SER OVALADOS */
+        input, select, button, .button, .btn {
+            border-radius: 25px !important;
+            padding: 10px 15px !important;
+            border: 1px solid #555 !important;
+            background-color: #3d3d3d !important;
+            color: white !important;
+        }
+
+        h1, h2, h3 { color: #ffffff; }
+        a { color: #3498db; text-decoration: none; }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar-ovalada">
+        <span style="font-weight: bold; font-size: 1.2rem;">PAOLA BAEZA | Clínica</span>
+        
+        {% if user.is_authenticated %}
+            <div style="display: flex; align-items: center; gap: 20px;">
+                <span>Bienvenido, <strong>{{ user.username }}</strong></span>
+                <form action="{% url 'logout' %}" method="post" style="margin: 0;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn-logout">Cerrar Sesión</button>
+                </form>
+            </div>
+        {% endif %}
+    </nav>
+
+    <div class="contenedor-principal">
+        {% block content %}
+        {% endblock %}
+    </div>
+
+</body>
+</html>

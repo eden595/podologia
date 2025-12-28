@@ -1,0 +1,59 @@
+{% extends "pacientes/base.html" %}
+{% block content %}
+<div class="card card-pro shadow-lg p-5">
+    <h3 class="fw-bold mb-5" style="color: #e91e63;">Nuevo Registro Clínico: {{ paciente.nombre }}</h3>
+    <form method="POST" id="form-tratamiento" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="mb-5">
+            <label class="form-label fw-bold text-white mb-3">Procedimientos Realizados:</label>
+            <div class="row g-2">
+                <div class="col-6 col-md-3"><input type="checkbox" class="btn-check" name="tratamientos_check" value="ONICOTOMÍA" id="t1"><label class="btn btn-outline-light w-100 btn-oval-pro py-2" for="t1">ONICOTOMÍA</label></div>
+                <div class="col-6 col-md-3"><input type="checkbox" class="btn-check" name="tratamientos_check" value="DEBASTADO UNGUEAL" id="t2"><label class="btn btn-outline-light w-100 btn-oval-pro py-2" for="t2">DEBASTADO UNGUEAL</label></div>
+                <div class="col-6 col-md-3"><input type="checkbox" class="btn-check" name="tratamientos_check" value="DESPICULIZACIÓN" id="t3"><label class="btn btn-outline-light w-100 btn-oval-pro py-2" for="t3">DESPICULIZACIÓN</label></div>
+                <div class="col-6 col-md-3"><input type="checkbox" class="btn-check" name="tratamientos_check" value="ENUCLACIÓN" id="t4"><label class="btn btn-outline-light w-100 btn-oval-pro py-2" for="t4">ENUCLACIÓN</label></div>
+                <div class="col-6 col-md-3"><input type="checkbox" class="btn-check" name="tratamientos_check" value="CURACIÓN" id="t5"><label class="btn btn-outline-light w-100 btn-oval-pro py-2" for="t5">CURACIÓN</label></div>
+                <div class="col-6 col-md-3"><input type="checkbox" class="btn-check" name="tratamientos_check" value="LÁSER ONICOMICOSIS" id="t6"><label class="btn btn-outline-light w-100 btn-oval-pro py-2" for="t6">LÁSER ONICOMICOSIS</label></div>
+                <div class="col-6 col-md-3"><input type="checkbox" class="btn-check" name="tratamientos_check" value="MASAJE PODAL" id="t7"><label class="btn btn-outline-light w-100 btn-oval-pro py-2" for="t7">MASAJE PODAL</label></div>
+                <div class="col-6 col-md-3"><input type="checkbox" class="btn-check" name="tratamientos_check" value="EDUCACIÓN" id="t8"><label class="btn btn-outline-light w-100 btn-oval-pro py-2" for="t8">EDUCACIÓN</label></div>
+            </div>
+        </div>
+        <div class="mb-5"><label class="form-label">Otros detalles / Notas adicionales:</label><textarea name="otros_texto" class="form-control" rows="3" placeholder="Escriba detalles adicionales aquí..."></textarea></div>
+        <div class="mb-5">
+            <label class="form-label">Registro Fotográfico del Procedimiento:</label>
+            <div class="p-3 border border-secondary rounded-4 text-center" style="border-style: dashed !important;"><input type="file" name="foto" accept="image/*" capture="camera" class="form-control"></div>
+        </div>
+        
+        <div class="mb-5">
+            <div class="p-4 bg-light text-dark shadow-sm" style="border-radius: 20px; line-height: 1.6;">
+                <h6 class="fw-bold mb-3" style="color: #e91e63;">CONSENTIMIENTO INFORMADO</h6>
+                <p class="mb-0 small">
+                    El usuario deja constancia, que se le explica sobre los tratamientos podológicos, y que no están exentos de riesgos, como lesiones cortantes, abrasivas o irritantes. Manifiesta que el profesional de salud le entrega está información y le da la oportunidad de preguntar y resolver dudas. Además, que ha entendido las condiciones, objetivos y cuidados de los procedimientos realizados.
+                </p>
+            </div>
+        </div>
+
+        <div class="mb-5 text-center">
+            <label class="form-label d-block text-start text-white-50">Firma de Conformidad del Paciente:</label>
+            <div class="bg-white shadow-lg p-2" style="border-radius: 25px;"><canvas id="canvas-firma" width="600" height="250" class="w-100" style="touch-action: none; cursor: crosshair;"></canvas></div>
+            <input type="hidden" name="firma_base64" id="firma_base64">
+            <button type="button" id="btn-limpiar" class="btn btn-outline-light btn-sm mt-3 rounded-pill">Borrar Firma</button>
+        </div>
+        <div class="text-center mt-5"><button type="submit" class="btn btn-primary btn-oval-pro px-5 shadow-lg" style="background:#e91e63;">GUARDAR REGISTRO COMPLETO</button></div>
+    </form>
+</div>
+<script>
+    const canvas = document.getElementById('canvas-firma'); const ctx = canvas.getContext('2d'); let dib = false;
+    ctx.strokeStyle = "#000"; ctx.lineWidth = 3; ctx.lineCap = 'round';
+    const getP = (e) => { 
+        const r = canvas.getBoundingClientRect(); const sX = canvas.width / r.width; const sY = canvas.height / r.height;
+        const cX = e.touches ? e.touches[0].clientX : e.clientX; const cY = e.touches ? e.touches[0].clientY : e.clientY; 
+        return { x: (cX - r.left) * sX, y: (cY - r.top) * sY }; 
+    };
+    const st = (e) => { dib = true; const p = getP(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); e.preventDefault(); };
+    const mv = (e) => { if(!dib) return; const p = getP(e); ctx.lineTo(p.x, p.y); ctx.stroke(); e.preventDefault(); };
+    canvas.addEventListener('mousedown', st); canvas.addEventListener('mousemove', mv); window.addEventListener('mouseup', () => dib=false);
+    canvas.addEventListener('touchstart', st); canvas.addEventListener('touchmove', mv); canvas.addEventListener('touchend', () => dib=false);
+    document.getElementById('btn-limpiar').onclick = () => ctx.clearRect(0,0,600,250);
+    document.getElementById('form-tratamiento').onsubmit = () => document.getElementById('firma_base64').value = canvas.toDataURL();
+</script>
+{% endblock %}

@@ -1,0 +1,64 @@
+{% extends "pacientes/base.html" %}
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="card card-pro shadow-lg border-0">
+                <div class="bg-gradient-primary p-4" style="background: linear-gradient(195deg, #ec407a 0%, #d81b60 100%); border-radius: 20px 20px 0 0;">
+                    <h4 class="text-white text-center mb-0">Nuevo Registro de Paciente</h4>
+                </div>
+                <div class="card-body p-5">
+                    <form method="POST">
+                        {% csrf_token %}
+                        <div class="row">
+                            <div class="col-12 mb-3"><h6 class="text-white border-bottom border-secondary pb-2">Datos de Identificación</h6></div>
+                            <div class="col-md-6 mb-4">
+                                <label class="form-label text-white">Nombre Completo</label>
+                                <input type="text" name="nombre" class="form-control input-dark-oval" placeholder="Ej: Juan Pérez" required>
+                            </div>
+                            <div class="col-md-6 mb-4">
+                                <label class="form-label text-white">RUT / DNI</label>
+                                <input type="text" name="rut" class="form-control input-dark-oval" placeholder="12.345.678-9" required>
+                            </div>
+                            <div class="col-md-6 mb-4">
+                                <label class="form-label text-white">Teléfono de Contacto</label>
+                                <input type="tel" name="telefono" class="form-control input-dark-oval" placeholder="+56 9 1234 5678" required>
+                            </div>
+                            <div class="col-md-6 mb-4">
+                                <label class="form-label text-white">Email</label>
+                                <input type="email" name="email" class="form-control input-dark-oval" placeholder="paciente@correo.com" required>
+                            </div>
+                            
+                            <div class="col-12 mt-4 mb-3"><h6 class="text-white border-bottom border-secondary pb-2">Ficha Técnica Inicial</h6></div>
+                            <div class="col-md-6 mb-4 d-flex align-items-center">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" name="diabetes" id="db">
+                                    <label class="form-check-label text-white ms-3" for="db">¿Padece Diabetes?</label>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-4 d-flex align-items-center">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" name="hipertension" id="ht">
+                                    <label class="form-check-label text-white ms-3" for="ht">¿Padece Hipertensión?</label>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-4">
+                                <label class="form-label text-white">Alergias Conocidas</label>
+                                <textarea name="alergias" class="form-control input-dark-oval" rows="2" placeholder="Ej: Penicilina..."></textarea>
+                            </div>
+                            <div class="col-md-6 mb-4">
+                                <label class="form-label text-white">Observaciones Médicas</label>
+                                <textarea name="observaciones_medicas" class="form-control input-dark-oval" rows="2" placeholder="Notas adicionales..."></textarea>
+                            </div>
+                        </div>
+                        <div class="text-center mt-5">
+                            <button type="submit" class="btn btn-primary btn-oval-pro w-50" style="background: #e91e63;">REGISTRAR PACIENTE</button>
+                            <a href="{% url 'lista_pacientes' %}" class="btn btn-link text-secondary d-block mt-3">Cancelar y Volver</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

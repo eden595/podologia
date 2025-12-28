@@ -1,0 +1,102 @@
+{% extends "pacientes/base.html" %}
+{% block content %}
+<div class="container-fluid">
+    <div class="card card-pro mb-4 text-white shadow-lg overflow-hidden" style="background: linear-gradient(135deg, #e91e63 0%, #ad1457 100%); border:none; border-radius: 25px;">
+        <div class="p-4 d-flex justify-content-between align-items-center flex-wrap">
+            <div>
+                <h2 class="fw-bold mb-0 text-white">{{ paciente.nombre }}</h2>
+                <p class="mb-0 opacity-75">RUT: {{ paciente.rut }}</p>
+            </div>
+            <a href="{% url 'registrar_tratamiento' paciente.pk %}" class="btn btn-light btn-oval-pro fw-bold mt-2 mt-md-0" style="color: #e91e63;">
+                <span class="material-icons-round align-middle me-1">add</span> NUEVO TRATAMIENTO
+            </a>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-4 mb-4">
+            <div class="card card-pro p-4 shadow h-100">
+                <h5 class="fw-bold mb-4" style="color: #e91e63;">Información de Contacto</h5>
+                
+                <div class="bg-dark p-3 rounded-4 mb-3 border border-secondary">
+                    <small class="text-white-50 d-block mb-1">Teléfono:</small>
+                    <p class="text-white mb-0 fw-bold">{{ paciente.telefono|default:"No registrado" }}</p>
+                </div>
+                
+                <div class="bg-dark p-3 rounded-4 mb-4 border border-secondary">
+                    <small class="text-white-50 d-block mb-1">Email:</small>
+                    <p class="text-white mb-0 small">{{ paciente.email }}</p>
+                </div>
+
+                <h5 class="fw-bold mb-3" style="color: #e91e63;">Anamnesis</h5>
+                
+                <div class="mb-4 d-flex gap-2 flex-wrap">
+                    <span class="badge {% if paciente.diabetes %}bg-danger shadow-danger{% else %}bg-dark opacity-50{% endif %} rounded-pill p-2 px-3">
+                        Diabetes: {% if paciente.diabetes %}SÍ{% else %}NO{% endif %}
+                    </span>
+                    <span class="badge {% if paciente.hipertension %}bg-danger shadow-danger{% else %}bg-dark opacity-50{% endif %} rounded-pill p-2 px-3">
+                        HTA: {% if paciente.hipertension %}SÍ{% else %}NO{% endif %}
+                    </span>
+                </div>
+
+                <div class="bg-dark p-3 rounded-4 mb-3 border border-secondary">
+                    <small class="text-white-50 d-block mb-1">Alergias:</small>
+                    <p class="text-white mb-0 small">{{ paciente.alergias|default:"Ninguna registrada" }}</p>
+                </div>
+
+                <div class="bg-dark p-3 rounded-4 mb-3 border border-secondary">
+                    <small class="text-white-50 d-block mb-1">Observaciones Médicas:</small>
+                    <p class="text-white mb-0 small">{{ paciente.observaciones_medicas|default:"Sin observaciones adicionales" }}</p>
+                </div>
+
+                <div class="mt-4 text-center">
+                    <a href="{% url 'lista_pacientes' %}" class="text-secondary text-decoration-none small d-flex align-items-center justify-content-center">
+                        <span class="material-icons-round me-1" style="font-size: 16px;">arrow_back</span>
+                        Volver al Listado
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-8">
+            <h4 class="fw-bold mb-3 text-white">Historial Clínico</h4>
+            {% for t in historial %}
+            <div class="card card-pro mb-3 border-start border-4 shadow" style="border-color: #e91e63 !important;">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between mb-3 align-items-start">
+                        <div class="d-flex align-items-center">
+                            <span class="material-icons-round text-white p-2 rounded-circle me-3" style="background: #e91e63; font-size:20px;">spa</span>
+                            <div>
+                                <h6 class="fw-bold text-white mb-0">Procedimiento Podológico</h6>
+                                <small class="text-secondary">{{ t.fecha|date:"d/m/Y - H:i" }}</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-dark p-3 mb-3 border border-secondary rounded-4">
+                        <p class="mb-0 text-white">{{ t.procedimiento }}</p>
+                    </div>
+
+                    {% if t.foto %}
+                    <div class="mb-3 text-center">
+                        <small class="text-white-50 d-block mb-2 text-start">Evidencia fotográfica:</small>
+                        <img src="{{ t.foto.url }}" class="img-fluid rounded-4 shadow-sm" style="max-height: 350px; border: 2px solid #333;">
+                    </div>
+                    {% endif %}
+
+                    <div class="text-center mt-4">
+                        <small class="text-white-50 d-block mb-2">Firma del paciente:</small>
+                        <img src="{{ t.firma }}" style="max-height: 90px; filter: invert(1); opacity: 0.9;">
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="card card-pro p-5 text-center">
+                <span class="material-icons-round display-4 text-secondary opacity-25">history_edu</span>
+                <p class="text-secondary mt-3">No hay tratamientos registrados para este paciente.</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}
