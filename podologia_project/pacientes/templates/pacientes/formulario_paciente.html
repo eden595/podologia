@@ -1,62 +1,80 @@
 {% extends "pacientes/base.html" %}
+
 {% block content %}
-<div class="container-fluid py-4">
-    <div class="row justify-content-center">
-        <div class="col-lg-10">
-            <div class="card card-pro shadow-lg border-0">
-                <div class="bg-gradient-primary p-4" style="background: linear-gradient(195deg, #ec407a 0%, #d81b60 100%); border-radius: 20px 20px 0 0;">
-                    <h4 class="text-white text-center mb-0">Nuevo Registro de Paciente</h4>
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card card-pro shadow-lg border-0">
+            <div class="card-header bg-transparent border-0 text-center pt-5 pb-0">
+                <div class="d-inline-flex align-items-center justify-content-center mb-3" 
+                     style="width: 60px; height: 60px; background: #333; border-radius: 50%;">
+                    <span class="material-icons-round text-white">person_add</span>
                 </div>
-                <div class="card-body p-5">
-                    <form method="POST">
-                        {% csrf_token %}
-                        <div class="row">
-                            <div class="col-12 mb-3"><h6 class="text-white border-bottom border-secondary pb-2">Datos de Identificación</h6></div>
-                            <div class="col-md-6 mb-4">
-                                <label class="form-label text-white">Nombre Completo</label>
-                                <input type="text" name="nombre" class="form-control input-dark-oval" placeholder="Ej: Juan Pérez" required>
-                            </div>
-                            <div class="col-md-6 mb-4">
-                                <label class="form-label text-white">RUT / DNI</label>
-                                <input type="text" name="rut" class="form-control input-dark-oval" placeholder="12.345.678-9" required>
-                            </div>
-                            <div class="col-md-6 mb-4">
-                                <label class="form-label text-white">Teléfono de Contacto</label>
-                                <input type="tel" name="telefono" class="form-control input-dark-oval" placeholder="+56 9 1234 5678" required>
-                            </div>
-                            <div class="col-md-6 mb-4">
-                                <label class="form-label text-white">Email</label>
-                                <input type="email" name="email" class="form-control input-dark-oval" placeholder="paciente@correo.com" required>
-                            </div>
-                            
-                            <div class="col-12 mt-4 mb-3"><h6 class="text-white border-bottom border-secondary pb-2">Ficha Técnica Inicial</h6></div>
-                            <div class="col-md-6 mb-4 d-flex align-items-center">
+                <h3 class="fw-bold text-white mb-0">Nuevo Paciente</h3>
+            </div>
+            
+            <div class="card-body p-5">
+                <form method="POST">
+                    {% csrf_token %}
+                    
+                    <h6 class="text-secondary text-uppercase fw-bold mb-4 small" style="letter-spacing: 1px;">Información Personal</h6>
+                    
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <label class="form-label text-white ms-3 small">Nombre Completo</label>
+                            <input type="text" name="nombre" class="form-control" placeholder="Ej: Juan Pérez" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-white ms-3 small">RUT / DNI</label>
+                            <input type="text" name="rut" class="form-control" placeholder="12.345.678-9" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-white ms-3 small">Teléfono</label>
+                            <input type="tel" name="telefono" class="form-control" placeholder="+56 9..." required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-white ms-3 small">Correo Electrónico</label>
+                            <input type="email" name="email" class="form-control" placeholder="nombre@correo.com" required>
+                        </div>
+                    </div>
+
+                    <h6 class="text-secondary text-uppercase fw-bold mb-4 small mt-5" style="letter-spacing: 1px;">Antecedentes Médicos</h6>
+
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <div class="p-3 rounded-5 border border-secondary d-flex align-items-center justify-content-between" style="background: #252525;">
+                                <label class="text-white mb-0" for="diabetes">¿Padece Diabetes?</label>
                                 <div class="form-check form-switch">
-                                    <input class="form-check-input" type="checkbox" name="diabetes" id="db">
-                                    <label class="form-check-label text-white ms-3" for="db">¿Padece Diabetes?</label>
+                                    <input class="form-check-input" type="checkbox" name="diabetes" id="diabetes" style="width: 50px; height: 25px;">
                                 </div>
                             </div>
-                            <div class="col-md-6 mb-4 d-flex align-items-center">
+                        </div>
+                        <div class="col-md-6">
+                            <div class="p-3 rounded-5 border border-secondary d-flex align-items-center justify-content-between" style="background: #252525;">
+                                <label class="text-white mb-0" for="hipertension">¿Hipertensión (HTA)?</label>
                                 <div class="form-check form-switch">
-                                    <input class="form-check-input" type="checkbox" name="hipertension" id="ht">
-                                    <label class="form-check-label text-white ms-3" for="ht">¿Padece Hipertensión?</label>
+                                    <input class="form-check-input" type="checkbox" name="hipertension" id="hipertension" style="width: 50px; height: 25px;">
                                 </div>
                             </div>
-                            <div class="col-md-6 mb-4">
-                                <label class="form-label text-white">Alergias Conocidas</label>
-                                <textarea name="alergias" class="form-control input-dark-oval" rows="2" placeholder="Ej: Penicilina..."></textarea>
-                            </div>
-                            <div class="col-md-6 mb-4">
-                                <label class="form-label text-white">Observaciones Médicas</label>
-                                <textarea name="observaciones_medicas" class="form-control input-dark-oval" rows="2" placeholder="Notas adicionales..."></textarea>
-                            </div>
                         </div>
-                        <div class="text-center mt-5">
-                            <button type="submit" class="btn btn-primary btn-oval-pro w-50" style="background: #e91e63;">REGISTRAR PACIENTE</button>
-                            <a href="{% url 'lista_pacientes' %}" class="btn btn-link text-secondary d-block mt-3">Cancelar y Volver</a>
-                        </div>
-                    </form>
-                </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label text-white ms-3 small">Alergias</label>
+                        <textarea name="alergias" class="form-control" rows="2" style="border-radius: 20px;" placeholder="Indique alergias a medicamentos o materiales..."></textarea>
+                    </div>
+
+                    <div class="mb-5">
+                        <label class="form-label text-white ms-3 small">Observaciones Generales</label>
+                        <textarea name="observaciones_medicas" class="form-control" rows="2" style="border-radius: 20px;" placeholder="Otras condiciones relevantes..."></textarea>
+                    </div>
+
+                    <div class="d-grid gap-2 col-lg-8 mx-auto">
+                        <button type="submit" class="btn btn-primary btn-oval-pro py-3 shadow-lg" style="background: #e91e63; border:none;">
+                            GUARDAR PACIENTE
+                        </button>
+                        <a href="{% url 'lista_pacientes' %}" class="btn btn-outline-light btn-oval-pro py-2 border-0">Cancelar</a>
+                    </div>
+                </form>
             </div>
         </div>
     </div>

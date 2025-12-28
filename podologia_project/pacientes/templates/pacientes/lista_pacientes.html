@@ -1,38 +1,81 @@
 {% extends "pacientes/base.html" %}
+
 {% block content %}
 <style>
-    .card-equal { height: 100%; display: flex; flex-direction: column; }
-    .name-box { min-height: 56px; display: flex; align-items: center; justify-content: center; text-align: center; }
+    .card-equal { 
+        height: 100%; 
+        display: flex; 
+        flex-direction: column; 
+        transition: transform 0.2s ease;
+    }
+    .card-equal:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(233, 30, 99, 0.2) !important;
+    }
+    .avatar-circle {
+        width: 70px; 
+        height: 70px; 
+        background: linear-gradient(135deg, #333 0%, #222 100%);
+        border-radius: 50%; 
+        display:flex; 
+        align-items:center; 
+        justify-content:center;
+        border: 2px solid #e91e63;
+        margin: 0 auto 15px auto;
+    }
 </style>
-<div class="container-fluid">
-    <div class="row mb-5 align-items-center gy-3">
-        <div class="col-lg-4 col-12"><h3 class="fw-bold text-white mb-0">Gestión de Pacientes</h3></div>
-        <div class="col-lg-5 col-12">
-            <form method="GET">
-                <div class="input-group" style="background: #2c2c2c; border-radius: 50px; padding: 5px 20px; border: 1px solid rgba(255,255,255,0.1);">
-                    <span class="material-icons-round text-secondary mt-2 me-2">search</span>
-                    <input type="text" name="buscar" class="form-control border-0 bg-transparent text-white" placeholder="Buscar por nombre o RUT..." value="{{ termino_busqueda|default:'' }}">
-                    <button type="submit" class="btn btn-link text-secondary p-0"><span class="material-icons-round">arrow_forward</span></button>
-                </div>
-            </form>
-        </div>
-        <div class="col-lg-3 col-12 text-lg-end">
-            <a href="{% url 'crear_paciente' %}" class="btn btn-primary btn-oval-pro w-100" style="background: #e91e63;">+ NUEVO PACIENTE</a>
-        </div>
+
+<div class="row align-items-center mb-5 gy-3">
+    <div class="col-lg-5">
+        <h2 class="fw-bold text-white mb-0">Gestión de Pacientes</h2>
+        <p class="text-secondary small mb-0">Administración clínica</p>
     </div>
-    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4">
-        {% for p in pacientes %}
-        <div class="col">
-            <div class="card card-pro p-4 card-equal shadow">
-                <div class="avatar-circle mx-auto mb-3" style="width: 60px; height: 60px; background: rgba(233,30,99,0.1); border-radius: 50%; display:flex; align-items:center; justify-content:center;">
-                    <span class="material-icons-round" style="color:#e91e63; font-size: 30px;">person</span>
-                </div>
-                <div class="name-box"><h6 class="fw-bold text-white mb-1">{{ p.nombre }}</h6></div>
-                <p class="text-secondary small mb-4">RUT: {{ p.rut }}</p>
-                <div class="mt-auto"><a href="{% url 'detalle_paciente' p.pk %}" class="btn btn-outline-light btn-oval-pro w-100">VER FICHA</a></div>
+    
+    <div class="col-lg-4">
+        <form method="GET">
+            <div class="input-group shadow-sm">
+                <span class="input-group-text border-secondary text-white" style="border-radius: 50px 0 0 50px !important; border-right: none !important;">
+                    <span class="material-icons-round">search</span>
+                </span>
+                <input type="text" name="buscar" class="form-control border-secondary border-start-0 text-white" placeholder="Buscar por nombre o RUT..." value="{{ termino_busqueda|default:'' }}" style="border-radius: 0 50px 50px 0 !important;">
+            </div>
+        </form>
+    </div>
+
+    <div class="col-lg-3 text-lg-end">
+        <a href="{% url 'crear_paciente' %}" class="btn btn-primary btn-oval-pro w-100 shadow-lg" style="background: linear-gradient(45deg, #e91e63, #c2185b); border: none;">
+            <span class="material-icons-round align-middle me-1">add</span> NUEVO PACIENTE
+        </a>
+    </div>
+</div>
+
+<div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4">
+    {% for p in pacientes %}
+    <div class="col">
+        <div class="card card-pro p-4 card-equal shadow">
+            <div class="avatar-circle shadow">
+                <span class="material-icons-round" style="color:#fff; font-size: 32px;">person</span>
+            </div>
+            
+            <div class="text-center mb-3">
+                <h5 class="fw-bold text-white mb-1 text-truncate">{{ p.nombre }}</h5>
+                <span class="badge bg-dark border border-secondary text-secondary rounded-pill px-3">
+                    {{ p.rut }}
+                </span>
+            </div>
+
+            <div class="mt-auto">
+                <a href="{% url 'detalle_paciente' p.pk %}" class="btn btn-outline-light btn-oval-pro w-100 btn-sm d-flex align-items-center justify-content-center gap-2">
+                    VER FICHA <span class="material-icons-round" style="font-size: 16px;">arrow_forward</span>
+                </a>
             </div>
         </div>
-        {% endfor %}
     </div>
+    {% empty %}
+    <div class="col-12 text-center py-5">
+        <span class="material-icons-round display-1 text-secondary opacity-25">search_off</span>
+        <h4 class="text-secondary mt-3">No se encontraron pacientes</h4>
+    </div>
+    {% endfor %}
 </div>
 {% endblock %}

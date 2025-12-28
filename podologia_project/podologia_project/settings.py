@@ -4,23 +4,17 @@ from pathlib import Path
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
-
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = '[REDACTED_DJANGO_SECRET_KEY]'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
-
+ALLOWED_HOSTS = ['*']
 
 # Application definition
-
 INSTALLED_APPS = [
-    'pacientes',
+    'pacientes.apps.PacientesConfig', # Recomendado usar la config completa
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -41,12 +35,11 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = 'podologia_project.urls'
 
-# Asegúrate de que TEMPLATES tenga el DIRS configurado para encontrar tus carpetas
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'templates'], # Ruta estándar
-        'APP_DIRS': True,
+        'DIRS': [BASE_DIR / 'templates'], # Carpeta global de templates (opcional)
+        'APP_DIRS': True, # Busca dentro de la carpeta templates de cada app
         'OPTIONS': {
             'context_processors': [
                 'django.template.context_processors.debug',
@@ -60,61 +53,41 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'podologia_project.wsgi.application'
 
-
 # Database
-# https://docs.djangoproject.com/en/6.0/ref/settings/#databases
-
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'podogia', # El nombre que le pusiste en phpMyAdmin
+        'NAME': 'podogia', # CORREGIDO: Verifica que tu BD en phpMyAdmin se llame así
         'USER': 'root',
-        'PASSWORD': '[REDACTED_DB_PASSWORD]', # Vacío si usas XAMPP por defecto
+        'PASSWORD': '[REDACTED_DB_PASSWORD]', # Generalmente en XAMPP local es vacío, si tienes clave ponla aquí.
         'HOST': '127.0.0.1',
         'PORT': '3306',
     }
 }
 
-
 # Password validation
-# https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators
-
 AUTH_PASSWORD_VALIDATORS = [
-    {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
-    },
+    { 'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator', },
+    { 'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator', },
+    { 'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator', },
+    { 'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator', },
 ]
 
-
 # Internationalization
-# https://docs.djangoproject.com/en/6.0/topics/i18n/
-
 LANGUAGE_CODE = 'es-es'
-
-TIME_ZONE = 'America/Santiago' # Ajusta según tu ciudad
-
+TIME_ZONE = 'America/Santiago'
 USE_I18N = True
-
 USE_TZ = True
 
-
 # Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/6.0/howto/static-files/
-
 STATIC_URL = 'static/'
+STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')] # Opcional si usas estáticos globales
+
+# Media Files (Para las fotos de los tratamientos)
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-ALLOWED_HOSTS = ['*']
+
+# Login / Logout config
 LOGIN_URL = 'login'
-LOGIN_REDIRECT_URL = 'lista_pacientes'
-LOGOUT_REDIRECT_URL = 'login'
-LOGOUT_REDIRECT_URL = 'login'
+LOGIN_REDIRECT_URL = 'lista_pacientes' # A donde va al entrar
+LOGOUT_REDIRECT_URL = 'login' # A donde va al salir

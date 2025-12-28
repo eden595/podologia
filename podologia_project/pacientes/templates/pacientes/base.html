@@ -2,87 +2,122 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Podología Paola Baeza</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+
     <style>
-        /* RESET TOTAL PARA EVITAR QUE SE VEA "HORRIBLE" */
-        * { box-sizing: border-box; }
-        
+        /* --- ESTILOS GENERALES --- */
         body {
-            background-color: #121212 !important; /* Negro fondo */
+            background-color: #121212 !important; 
             color: #e0e0e0 !important;
-            font-family: 'Segoe UI', sans-serif;
-            margin: 0;
-            padding: 20px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
         }
 
-        /* CONTENEDOR PLOMO OVALADO */
-        .contenedor-principal {
-            background-color: #2c2c2c !important; /* Plomo */
-            border-radius: 50px !important; /* Muy ovalado */
-            padding: 40px;
-            border: 1px solid #444;
-            max-width: 1100px;
-            margin: 20px auto;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        /* --- CORRECCIÓN DE CONTRASTE (ESTO SOLUCIONA TU PROBLEMA) --- */
+        
+        /* 1. Forzar que el texto que escribes sea BLANCO */
+        .form-control, .form-select, input, textarea, .input-group-text {
+            background-color: #2c2c2c !important;
+            border-color: #444 !important;
+            color: #ffffff !important; /* Texto blanco puro */
         }
 
-        /* NAVBAR OVALADA */
-        .navbar-ovalada {
-            background-color: #2c2c2c;
-            border-radius: 60px;
-            padding: 15px 40px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border: 1px solid #444;
-            margin-bottom: 20px;
+        /* 2. Forzar que el texto de ayuda (placeholder) sea GRIS CLARO */
+        ::placeholder {
+            color: #bbbbbb !important; /* Gris claro visible */
+            opacity: 1; /* Para Firefox */
+        }
+        ::-webkit-input-placeholder { color: #bbbbbb !important; }
+        ::-moz-placeholder { color: #bbbbbb !important; }
+        :-ms-input-placeholder { color: #bbbbbb !important; }
+
+        /* 3. Arreglar los íconos dentro de las barras (Search, etc) */
+        .input-group-text .material-icons-round {
+            color: #ffffff !important; /* Íconos blancos */
         }
 
-        /* BOTÓN CERRAR SESIÓN (CORREGIDO PARA DJANGO 5+) */
-        .btn-logout {
-            background-color: #e74c3c;
-            color: white;
+        /* --- FIN CORRECCIONES --- */
+
+        .card-pro {
+            background-color: #1e1e1e !important;
+            border: 1px solid #333 !important;
+            border-radius: 30px !important;
+            overflow: hidden;
+        }
+
+        /* Inputs Redondeados */
+        .form-control, .input-group-text {
+            border-radius: 50px !important;
+            padding: 12px 20px;
+        }
+        
+        /* Efecto al hacer clic en un input */
+        .form-control:focus {
+            background-color: #333 !important;
+            border-color: #e91e63 !important;
+            box-shadow: 0 0 0 0.25rem rgba(233, 30, 99, 0.25) !important;
+            color: #ffffff !important;
+        }
+
+        .btn-oval-pro {
+            border-radius: 50px !important;
+            padding: 10px 25px !important;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
             border: none;
-            padding: 10px 25px;
-            border-radius: 50px; /* Ovalado */
-            cursor: pointer;
-            font-weight: bold;
-            font-size: 14px;
         }
 
-        /* FORZAR TODOS LOS BOTONES E INPUTS A SER OVALADOS */
-        input, select, button, .button, .btn {
-            border-radius: 25px !important;
-            padding: 10px 15px !important;
-            border: 1px solid #555 !important;
-            background-color: #3d3d3d !important;
-            color: white !important;
+        .navbar-custom {
+            background: #1e1e1e;
+            border-radius: 50px;
+            margin: 20px;
+            padding: 10px 30px;
+            border: 1px solid #333;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
         }
 
-        h1, h2, h3 { color: #ffffff; }
-        a { color: #3498db; text-decoration: none; }
+        /* Ajuste para íconos */
+        .material-icons-round {
+            vertical-align: middle;
+            line-height: 1;
+            display: inline-block;
+        }
+        
+        a { text-decoration: none; }
     </style>
 </head>
 <body>
 
-    <nav class="navbar-ovalada">
-        <span style="font-weight: bold; font-size: 1.2rem;">PAOLA BAEZA | Clínica</span>
-        
-        {% if user.is_authenticated %}
-            <div style="display: flex; align-items: center; gap: 20px;">
-                <span>Bienvenido, <strong>{{ user.username }}</strong></span>
-                <form action="{% url 'logout' %}" method="post" style="margin: 0;">
-                    {% csrf_token %}
-                    <button type="submit" class="btn-logout">Cerrar Sesión</button>
-                </form>
-            </div>
-        {% endif %}
+    <nav class="navbar navbar-expand-lg navbar-dark navbar-custom">
+        <div class="container-fluid">
+            <a class="navbar-brand fw-bold" href="{% url 'lista_pacientes' %}">
+                PAOLA BAEZA | <span style="color: #aaa; font-weight: normal;">Clínica</span>
+            </a>
+            
+            {% if user.is_authenticated %}
+                <div class="d-flex align-items-center gap-3">
+                    <span class="text-white-50 d-none d-md-block">Bienvenido, <strong class="text-white">{{ user.username }}</strong></span>
+                    <form action="{% url 'logout' %}" method="post" class="m-0">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-outline-secondary btn-sm rounded-pill px-3 text-white border-secondary">
+                            Cerrar Sesión
+                        </button>
+                    </form>
+                </div>
+            {% endif %}
+        </div>
     </nav>
 
-    <div class="contenedor-principal">
+    <div class="container py-4">
         {% block content %}
         {% endblock %}
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
