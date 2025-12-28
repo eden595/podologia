@@ -57,10 +57,10 @@ WSGI_APPLICATION = 'podologia_project.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'podogia', # CORREGIDO: Verifica que tu BD en phpMyAdmin se llame así
-        'USER': 'root',
+        'NAME': 'eden2001$podogia', # CORREGIDO: Verifica que tu BD en phpMyAdmin se llame así
+        'USER': 'eden2001',
         'PASSWORD': '[REDACTED_DB_PASSWORD]', # Generalmente en XAMPP local es vacío, si tienes clave ponla aquí.
-        'HOST': '127.0.0.1',
+        'HOST': 'eden2001.mysql.pythonanywhere-services.com',
         'PORT': '3306',
     }
 }
