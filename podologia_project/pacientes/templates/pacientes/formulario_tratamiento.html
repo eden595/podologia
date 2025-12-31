@@ -58,10 +58,22 @@
                     <h6 class="text-white fw-bold mb-3 border-bottom border-secondary pb-2 mt-5">2. Evidencia y Consentimiento</h6>
                     
                     <div class="row g-4 mb-5">
-                        <div class="col-md-6">
-                            <label class="form-label text-white ms-3 small">Fotografía del Procedimiento</label>
-                            <input type="file" name="foto" class="form-control" accept="image/*">
-                        </div>
+                        <div class="col-md-12">
+                            <label class="form-label text-white ms-3 small">Fotografías del Procedimiento</label>
+                            
+                            <div class="upload-zone text-center p-4 rounded-4 position-relative" id="drop-zone" style="border: 2px dashed #555; background: rgba(255,255,255,0.05); transition: all 0.3s ease;">
+                                <input type="file" name="fotos_extra" id="fotos_input" multiple class="position-absolute top-0 start-0 w-100 h-100 opacity-0" style="cursor: pointer;" accept="image/*">
+                                
+                                <div class="pointer-events-none">
+                                    <div class="mb-2">
+                                        <span class="material-icons-round text-primary" style="font-size: 40px;">add_photo_alternate</span>
+                                    </div>
+                                    <h6 class="text-white mb-1">Haz clic aquí para agregar fotos</h6>
+                                    <small class="text-secondary" id="file-count">Puedes seleccionar varias imágenes a la vez</small>
+                                </div>
+                            </div>
+                            </div>
+                        
                         <div class="col-12">
                             <div class="p-3 rounded-4" style="background: rgba(233, 30, 99, 0.1); border: 1px solid rgba(233, 30, 99, 0.3);">
                                 <p class="mb-0 small text-white-50 text-justify">
@@ -106,7 +118,6 @@
     ctx.lineWidth = 3; 
     ctx.lineCap = 'round';
 
-    // Función para obtener coordenadas exactas (Mouse y Touch)
     const getPos = (e) => { 
         const rect = canvas.getBoundingClientRect(); 
         const scaleX = canvas.width / rect.width; 
@@ -120,22 +131,47 @@
     const moveDraw = (e) => { if(!dib) return; const p = getPos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); e.preventDefault(); };
     const endDraw = () => { dib = false; };
 
-    // Eventos Mouse (PC)
     canvas.addEventListener('mousedown', startDraw); 
     canvas.addEventListener('mousemove', moveDraw); 
     window.addEventListener('mouseup', endDraw);
-    
-    // Eventos Touch (Móvil/Tablet)
     canvas.addEventListener('touchstart', startDraw, {passive: false}); 
     canvas.addEventListener('touchmove', moveDraw, {passive: false}); 
     canvas.addEventListener('touchend', endDraw);
 
-    // Botón Borrar
     document.getElementById('btn-limpiar').onclick = () => ctx.clearRect(0,0,canvas.width,canvas.height);
     
-    // Guardar firma en input oculto al enviar
     document.getElementById('form-tratamiento').onsubmit = function(e) {
         document.getElementById('firma_base64').value = canvas.toDataURL();
     };
+
+    // --- LÓGICA PARA MEJORAR EL DISEÑO DEL INPUT DE FOTOS ---
+    const fotosInput = document.getElementById('fotos_input');
+    const fileCount = document.getElementById('file-count');
+    const dropZone = document.getElementById('drop-zone');
+
+    // Cambiar color al pasar el mouse por encima
+    dropZone.addEventListener('mouseover', () => {
+        dropZone.style.background = 'rgba(255,255,255,0.1)';
+        dropZone.style.borderColor = '#e91e63';
+    });
+    dropZone.addEventListener('mouseout', () => {
+        dropZone.style.background = 'rgba(255,255,255,0.05)';
+        dropZone.style.borderColor = '#555';
+    });
+
+    // Mostrar cuántos archivos se seleccionaron
+    fotosInput.addEventListener('change', function(e) {
+        const count = e.target.files.length;
+        if (count > 0) {
+            fileCount.innerText = `¡Genial! Has seleccionado ${count} foto(s)`;
+            fileCount.classList.remove('text-secondary');
+            fileCount.classList.add('text-primary', 'fw-bold');
+            dropZone.style.borderColor = '#e91e63';
+        } else {
+            fileCount.innerText = 'Puedes seleccionar varias imágenes a la vez';
+            fileCount.classList.add('text-secondary');
+            fileCount.classList.remove('text-primary', 'fw-bold');
+        }
+    });
 </script>
 {% endblock %}

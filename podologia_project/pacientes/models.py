@@ -32,3 +32,11 @@ class FotoGaleria(models.Model):
 
     def __str__(self):
         return f"Foto de {self.paciente.nombre} - {self.fecha_subida}"
+    
+class FotoTratamiento(models.Model):
+    tratamiento = models.ForeignKey(Tratamiento, on_delete=models.CASCADE, related_name='fotos_tratamiento')
+    imagen = models.ImageField(upload_to='tratamientos_extra/')
+    fecha_subida = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Foto extra del tratamiento {self.tratamiento.id}"

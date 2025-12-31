@@ -67,6 +67,7 @@ def detalle_paciente(request, pk):
 @login_required
 def registrar_tratamiento(request, pk):
     paciente = get_object_or_404(Paciente, pk=pk)
+    
     if request.method == "POST":
         seleccionados = request.POST.getlist('tratamientos_check')
         otros = request.POST.get('otros_texto', '')
@@ -76,13 +77,26 @@ def registrar_tratamiento(request, pk):
         if otros: 
             procedimiento_final += f" | Notas: {otros}"
 
-        # Crear el tratamiento
-        Tratamiento.objects.create(
+        # 1. Crear el tratamiento (con la foto principal si la hay)
+        nuevo_tratamiento = Tratamiento.objects.create(
             paciente=paciente,
             procedimiento=procedimiento_final,
             foto=request.FILES.get('foto'), 
             firma=request.POST.get('firma_base64')
         )
+
+        # 2. LOGICA NUEVA: Guardar fotos EXTRA del tratamiento
+        # Importamos el modelo aquí dentro para evitar errores si no lo pusiste arriba
+        from .models import FotoTratamiento 
+        
+        imagenes_extra = request.FILES.getlist('fotos_extra') # Ojo al nombre 'fotos_extra'
+        
+        for img in imagenes_extra:
+            FotoTratamiento.objects.create(
+                tratamiento=nuevo_tratamiento,
+                imagen=img
+            )
+
         return redirect('detalle_paciente', pk=paciente.pk)
         
     return render(request, 'pacientes/formulario_tratamiento.html', {'paciente': paciente})
