@@ -13,7 +13,7 @@
             </div>
             
             <div class="card-body p-5">
-                <form method="POST" enctype="multipart/form-data">
+                <form method="POST">
                     {% csrf_token %}
                     
                     {% if error %}
@@ -69,16 +69,11 @@
                         <textarea name="alergias" class="form-control" rows="2" style="border-radius: 20px;" placeholder="Indique alergias a medicamentos o materiales..."></textarea>
                     </div>
 
-                    <div class="mb-4">
+                    <div class="mb-5">
                         <label class="form-label text-white ms-3 small">Observaciones Generales</label>
                         <textarea name="observaciones_medicas" class="form-control" rows="2" style="border-radius: 20px;" placeholder="Otras condiciones relevantes..."></textarea>
                     </div>
 
-                    <h6 class="text-secondary text-uppercase fw-bold mb-4 small mt-5" style="letter-spacing: 1px;">Galería de Imágenes</h6>
-                    <div class="mb-5">
-                        <label class="form-label text-white ms-3 small">Fotos Iniciales (Puede seleccionar varias)</label>
-                        <input type="file" name="imagenes_extra" multiple class="form-control" style="border-radius: 20px;">
-                    </div>
                     <div class="d-grid gap-2 col-lg-8 mx-auto">
                         <button type="submit" class="btn btn-primary btn-oval-pro py-3 shadow-lg" style="background: #e91e63; border:none;">
                             GUARDAR PACIENTE

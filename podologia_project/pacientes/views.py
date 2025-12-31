@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.db.models import Q
 from django.contrib.auth.decorators import login_required
 from django.db import IntegrityError 
-from .models import Paciente, Tratamiento, FotoGaleria # Importación corregida en una sola línea
+from .models import Paciente, Tratamiento, FotoTratamiento, FotoGaleria
 
 @login_required
 def lista_pacientes(request):
@@ -19,8 +19,8 @@ def lista_pacientes(request):
 def crear_paciente(request):
     if request.method == "POST":
         try:
-            # 1. Guardamos el paciente en una variable 'nuevo_paciente' para usarlo después
-            nuevo_paciente = Paciente.objects.create(
+            # Solo guardamos los datos del paciente, sin fotos
+            Paciente.objects.create(
                 nombre=request.POST.get('nombre'),
                 rut=request.POST.get('rut'),
                 telefono=request.POST.get('telefono'),
@@ -30,20 +30,9 @@ def crear_paciente(request):
                 alergias=request.POST.get('alergias', ''),
                 observaciones_medicas=request.POST.get('observaciones_medicas', '')
             )
-
-            # 2. LOGICA NUEVA: Guardar las múltiples fotos del historial
-            imagenes = request.FILES.getlist('imagenes_extra') # Debe coincidir con el name del input HTML
-            
-            for img in imagenes:
-                FotoGaleria.objects.create(
-                    paciente=nuevo_paciente, 
-                    imagen=img
-                )
-
             return redirect('lista_pacientes')
 
         except IntegrityError:
-            # Si el RUT ya existe, volvemos al formulario con un mensaje de error
             return render(request, 'pacientes/formulario_paciente.html', {
                 'error': 'El RUT ingresado ya está registrado en el sistema.'
             })
@@ -55,7 +44,7 @@ def detalle_paciente(request, pk):
     paciente = get_object_or_404(Paciente, pk=pk)
     historial = Tratamiento.objects.filter(paciente=paciente).order_by('-fecha')
     
-    # También enviamos las fotos de la galería para que puedas verlas en el detalle (opcional por ahora)
+    # Mantenemos esto por si en el futuro quieres agregar fotos, no da error dejarlo
     fotos_galeria = paciente.fotos_galeria.all().order_by('-fecha_subida')
 
     return render(request, 'pacientes/detalle_paciente.html', {
@@ -77,19 +66,17 @@ def registrar_tratamiento(request, pk):
         if otros: 
             procedimiento_final += f" | Notas: {otros}"
 
-        # 1. Crear el tratamiento (con la foto principal si la hay)
+        # 1. Crear el tratamiento 
         nuevo_tratamiento = Tratamiento.objects.create(
             paciente=paciente,
             procedimiento=procedimiento_final,
-            foto=request.FILES.get('foto'), 
+            # (Opcional) Guardamos la primera foto en el campo antiguo por compatibilidad
+            foto=request.FILES.getlist('fotos_extra')[0] if request.FILES.getlist('fotos_extra') else None, 
             firma=request.POST.get('firma_base64')
         )
 
-        # 2. LOGICA NUEVA: Guardar fotos EXTRA del tratamiento
-        # Importamos el modelo aquí dentro para evitar errores si no lo pusiste arriba
-        from .models import FotoTratamiento 
-        
-        imagenes_extra = request.FILES.getlist('fotos_extra') # Ojo al nombre 'fotos_extra'
+        # 2. Guardar fotos EXTRA del tratamiento
+        imagenes_extra = request.FILES.getlist('fotos_extra')
         
         for img in imagenes_extra:
             FotoTratamiento.objects.create(
