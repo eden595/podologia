@@ -4,10 +4,19 @@
 <div class="row justify-content-center">
     <div class="col-md-8">
         <div class="card card-pro shadow border-0">
+            
             <div class="card-header bg-transparent border-0 pt-4 pb-0">
-                <h3 class="text-white fw-bold">Editar Tratamiento</h3>
-                <p class="text-secondary">Paciente: <strong class="text-primary">{{ object.paciente.nombre }}</strong></p>
+                <div class="d-flex align-items-center mb-2">
+                    <a href="{% url 'detalle_paciente' object.paciente.pk %}" class="text-secondary text-decoration-none me-3" title="Volver a la ficha">
+                        <span class="material-icons-round fs-2" style="color: #e91e63;">arrow_back</span>
+                    </a>
+                    <div>
+                        <h3 class="text-white fw-bold mb-0">Editar Tratamiento</h3>
+                        <p class="text-secondary mb-0 small">Paciente: <strong class="text-primary">{{ object.paciente.nombre }}</strong></p>
+                    </div>
+                </div>
             </div>
+
             <div class="card-body p-4">
                 <form method="post" enctype="multipart/form-data">
                     {% csrf_token %}

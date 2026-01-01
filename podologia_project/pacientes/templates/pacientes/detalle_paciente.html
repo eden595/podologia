@@ -5,10 +5,16 @@
     <div class="col-lg-10">
         
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <div>
-                <h2 class="fw-bold text-white mb-0">{{ paciente.nombre }}</h2>
-                <p class="text-secondary mb-0">RUT: {{ paciente.rut }}</p>
+            <div class="d-flex align-items-center">
+                <a href="{% url 'lista_pacientes' %}" class="text-decoration-none me-3" title="Volver al inicio">
+                    <span class="material-icons-round" style="font-size: 36px; color: #e91e63;">arrow_back</span>
+                </a>
+                <div>
+                    <h2 class="fw-bold text-white mb-0">{{ paciente.nombre }}</h2>
+                    <p class="text-secondary mb-0">RUT: {{ paciente.rut }}</p>
+                </div>
             </div>
+            
             <a href="{% url 'registrar_tratamiento' paciente.pk %}" class="btn btn-primary btn-oval-pro py-2 px-4 shadow-lg" style="background: #e91e63; border: none;">
                 <span class="material-icons-round align-middle me-1">add_circle</span> Nuevo Tratamiento
             </a>
@@ -88,8 +94,6 @@
                             <a href="{% url 'eliminar_historial' item.pk %}" class="btn btn-outline-danger btn-sm" title="Borrar Tratamiento">
                                 <span class="material-icons-round" style="font-size: 16px;">delete</span>
                             </a>
-                        {% else %}
-                             <span class="badge bg-danger small" title="Error de datos: ID no encontrado">Error Data</span>
                         {% endif %}
                     </div>
                 </div>
@@ -100,13 +104,12 @@
 
                 <div class="mb-4">
                     <small class="text-secondary text-uppercase fw-bold d-block mb-2" style="font-size: 0.7rem;">Evidencia Fotográfica</small>
-                    
                     <div class="row g-2">
                         {% for foto_obj in item.fotos_tratamiento.all %}
                             <div class="col-6 col-md-3 col-lg-2">
                                 <div class="ratio ratio-1x1 position-relative group-hover">
                                     <a href="{{ foto_obj.imagen.url }}" target="_blank">
-                                        <img src="{{ foto_obj.imagen.url }}" class="rounded-3 border border-secondary shadow-sm w-100 h-100" style="object-fit: cover; transition: transform 0.2s;">
+                                        <img src="{{ foto_obj.imagen.url }}" class="rounded-3 border border-secondary shadow-sm w-100 h-100" style="object-fit: cover;">
                                     </a>
                                 </div>
                             </div>
@@ -138,7 +141,6 @@
                         {% endif %}
                     </div>
                 </div>
-
             </div>
         </div>
         {% empty %}
