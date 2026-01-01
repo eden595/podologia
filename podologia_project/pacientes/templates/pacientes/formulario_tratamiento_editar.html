@@ -3,27 +3,38 @@
 {% block content %}
 <div class="row justify-content-center">
     <div class="col-md-8">
-        <div class="card card-pro shadow">
-            <div class="card-header bg-transparent border-0 pt-4">
+        <div class="card card-pro shadow border-0">
+            <div class="card-header bg-transparent border-0 pt-4 pb-0">
                 <h3 class="text-white fw-bold">Editar Tratamiento</h3>
-                <p class="text-secondary">Paciente: {{ object.paciente.nombre }}</p>
+                <p class="text-secondary">Paciente: <strong class="text-primary">{{ object.paciente.nombre }}</strong></p>
             </div>
             <div class="card-body p-4">
                 <form method="post" enctype="multipart/form-data">
                     {% csrf_token %}
                     
-                    <div class="mb-3">
-                        <label class="text-white form-label">Procedimiento / Notas</label>
+                    <div class="alert alert-info small rounded-3 border-0 bg-dark text-white-50">
+                        <span class="material-icons-round align-middle me-1">info</span>
+                        Por seguridad, la firma del paciente y las fotos adicionales no se pueden modificar, solo el texto del procedimiento.
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="text-white form-label small ms-2">Descripción del Procedimiento</label>
                         {{ form.procedimiento }}
                     </div>
 
                     <div class="mb-4">
-                        <label class="text-white form-label">Foto Principal (Opcional)</label>
+                        <label class="text-white form-label small ms-2">Foto Principal (Opcional - Reemplazar)</label>
                         {{ form.foto }}
                     </div>
 
-                    <button type="submit" class="btn btn-primary btn-oval-pro">Guardar Cambios</button>
-                    <a href="{% url 'detalle_paciente' object.paciente.pk %}" class="btn btn-outline-light btn-oval-pro ms-2">Cancelar</a>
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary btn-oval-pro shadow-lg" style="background: #e91e63; border: none;">
+                            GUARDAR CAMBIOS
+                        </button>
+                        <a href="{% url 'detalle_paciente' object.paciente.pk %}" class="btn btn-outline-light btn-oval-pro border-0">
+                            Cancelar
+                        </a>
+                    </div>
                 </form>
             </div>
         </div>
