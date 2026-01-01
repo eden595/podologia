@@ -1,0 +1,21 @@
+{% extends 'pacientes/base.html' %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="card border-danger">
+        <div class="card-header bg-danger text-white">
+            Confirmar Eliminación
+        </div>
+        <div class="card-body">
+            <h5 class="card-title">¿Estás seguro de que deseas eliminar a {{ object.nombre }}?</h5>
+            <p class="card-text">Esta acción no se puede deshacer y se perderá su historial clínico.</p>
+            
+            <form method="post">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-danger">Sí, eliminar</button>
+                <a href="{% url 'lista_pacientes' %}" class="btn btn-secondary">Cancelar</a>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

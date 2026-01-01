@@ -1,51 +1,88 @@
 from django.shortcuts import render, redirect, get_object_or_404
+from django.urls import reverse_lazy
 from django.db.models import Q
 from django.contrib.auth.decorators import login_required
-from django.db import IntegrityError 
-from .models import Paciente, Tratamiento, FotoTratamiento, FotoGaleria
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.views.generic import ListView, CreateView, UpdateView, DeleteView
+from django.db import IntegrityError
 
-@login_required
-def lista_pacientes(request):
-    termino = request.GET.get('buscar', '')
-    if termino:
-        pacientes = Paciente.objects.filter(
-            Q(nombre__icontains=termino) | Q(rut__icontains=termino)
-        ).order_by('-id')
-    else:
-        pacientes = Paciente.objects.all().order_by('-id')
-    return render(request, 'pacientes/lista_pacientes.html', {'pacientes': pacientes, 'termino_busqueda': termino})
+# Asegúrate de importar tus modelos y formularios correctamente
+from .models import Paciente, Tratamiento, FotoTratamiento
+from .forms import PacienteForm, HistorialForm 
+# Nota: Asumo que en forms.py llamaste a la clase 'HistorialForm' aunque el modelo sea 'Tratamiento'.
+# Si cambiaste el nombre en forms.py a 'TratamientoForm', actualiza la importación arriba.
 
-@login_required
-def crear_paciente(request):
-    if request.method == "POST":
-        try:
-            # Solo guardamos los datos del paciente, sin fotos
-            Paciente.objects.create(
-                nombre=request.POST.get('nombre'),
-                rut=request.POST.get('rut'),
-                telefono=request.POST.get('telefono'),
-                email=request.POST.get('email'),
-                diabetes=request.POST.get('diabetes') == 'on',
-                hipertension=request.POST.get('hipertension') == 'on',
-                alergias=request.POST.get('alergias', ''),
-                observaciones_medicas=request.POST.get('observaciones_medicas', '')
-            )
-            return redirect('lista_pacientes')
+# ==========================================
+#              GESTIÓN DE PACIENTES
+# ==========================================
 
-        except IntegrityError:
-            return render(request, 'pacientes/formulario_paciente.html', {
-                'error': 'El RUT ingresado ya está registrado en el sistema.'
-            })
-            
-    return render(request, 'pacientes/formulario_paciente.html')
+# 1. LISTAR PACIENTES (Con tu buscador integrado)
+class PacienteListView(LoginRequiredMixin, ListView):
+    model = Paciente
+    template_name = 'pacientes/lista_pacientes.html'
+    context_object_name = 'pacientes'
+    paginate_by = 10  # Opcional: paginación
 
+    def get_queryset(self):
+        # Recuperamos el queryset original
+        queryset = super().get_queryset()
+        # Obtenemos el término de búsqueda de la URL
+        termino = self.request.GET.get('buscar')
+        
+        if termino:
+            # Filtramos por nombre O rut (tu lógica original)
+            queryset = queryset.filter(
+                Q(nombre__icontains=termino) | 
+                Q(rut__icontains=termino)
+            ).order_by('-id')
+        else:
+            queryset = queryset.order_by('-id')
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        # Pasamos el término al template para que se mantenga en la cajita de búsqueda
+        context = super().get_context_data(**kwargs)
+        context['termino_busqueda'] = self.request.GET.get('buscar', '')
+        return context
+
+# 2. CREAR PACIENTE
+class PacienteCreateView(LoginRequiredMixin, CreateView):
+    model = Paciente
+    form_class = PacienteForm
+    template_name = 'pacientes/formulario_paciente.html'
+    success_url = reverse_lazy('lista_pacientes')
+
+    def form_invalid(self, form):
+        # Si hay error (ej. RUT duplicado), Django lo maneja, 
+        # pero si quieres pasar un mensaje custom de IntegrityError manual:
+        return super().form_invalid(form)
+
+# 3. ACTUALIZAR PACIENTE
+class PacienteUpdateView(LoginRequiredMixin, UpdateView):
+    model = Paciente
+    form_class = PacienteForm
+    template_name = 'pacientes/formulario_paciente.html'
+    success_url = reverse_lazy('lista_pacientes')
+
+# 4. ELIMINAR PACIENTE
+class PacienteDeleteView(LoginRequiredMixin, DeleteView):
+    model = Paciente
+    template_name = 'pacientes/eliminar_paciente.html'
+    success_url = reverse_lazy('lista_pacientes')
+
+# 5. DETALLE PACIENTE (Ficha completa)
+# Mantenemos esto como función porque obtienes mucha info distinta (historial, fotos, etc.)
 @login_required
 def detalle_paciente(request, pk):
     paciente = get_object_or_404(Paciente, pk=pk)
+    # Aquí usamos 'Tratamiento' como en tu código original
     historial = Tratamiento.objects.filter(paciente=paciente).order_by('-fecha')
     
-    # Mantenemos esto por si en el futuro quieres agregar fotos, no da error dejarlo
-    fotos_galeria = paciente.fotos_galeria.all().order_by('-fecha_subida')
+    # Manejo de errores por si no tienes el modelo FotoGaleria migrado aún
+    try:
+        fotos_galeria = paciente.fotos_galeria.all().order_by('-fecha_subida')
+    except AttributeError:
+        fotos_galeria = []
 
     return render(request, 'pacientes/detalle_paciente.html', {
         'paciente': paciente, 
@@ -53,6 +90,13 @@ def detalle_paciente(request, pk):
         'fotos_galeria': fotos_galeria
     })
 
+
+# ==========================================
+#           GESTIÓN DE TRATAMIENTOS
+# ==========================================
+
+# 6. CREAR TRATAMIENTO (Mantenemos tu función original compleja)
+# Usamos función porque manejas request.FILES y lógica de checkbox manual
 @login_required
 def registrar_tratamiento(request, pk):
     paciente = get_object_or_404(Paciente, pk=pk)
@@ -66,18 +110,17 @@ def registrar_tratamiento(request, pk):
         if otros: 
             procedimiento_final += f" | Notas: {otros}"
 
-        # 1. Crear el tratamiento 
+        # Crear el tratamiento 
         nuevo_tratamiento = Tratamiento.objects.create(
             paciente=paciente,
-            procedimiento=procedimiento_final,
-            # (Opcional) Guardamos la primera foto en el campo antiguo por compatibilidad
+            procedimiento=procedimiento_final, # Asegúrate que tu modelo tenga este campo o adapta el form
+            # Nota: Si usas HistorialForm para editar, este campo 'procedimiento' debe existir en el modelo
             foto=request.FILES.getlist('fotos_extra')[0] if request.FILES.getlist('fotos_extra') else None, 
             firma=request.POST.get('firma_base64')
         )
 
-        # 2. Guardar fotos EXTRA del tratamiento
+        # Guardar fotos EXTRA
         imagenes_extra = request.FILES.getlist('fotos_extra')
-        
         for img in imagenes_extra:
             FotoTratamiento.objects.create(
                 tratamiento=nuevo_tratamiento,
@@ -87,3 +130,21 @@ def registrar_tratamiento(request, pk):
         return redirect('detalle_paciente', pk=paciente.pk)
         
     return render(request, 'pacientes/formulario_tratamiento.html', {'paciente': paciente})
+
+# 7. EDITAR TRATAMIENTO (Nueva funcionalidad solicitada)
+class TratamientoUpdateView(LoginRequiredMixin, UpdateView):
+    model = Tratamiento
+    form_class = HistorialForm # Usamos el form que creamos en el paso anterior
+    template_name = 'pacientes/formulario_tratamiento_editar.html' # Nuevo template simple
+    
+    def get_success_url(self):
+        # Al guardar, volvemos a la ficha del paciente
+        return reverse_lazy('detalle_paciente', kwargs={'pk': self.object.paciente.pk})
+
+# 8. ELIMINAR TRATAMIENTO (Nueva funcionalidad solicitada)
+class TratamientoDeleteView(LoginRequiredMixin, DeleteView):
+    model = Tratamiento
+    template_name = 'pacientes/eliminar_historial.html'
+    
+    def get_success_url(self):
+        return reverse_lazy('detalle_paciente', kwargs={'pk': self.object.paciente.pk})

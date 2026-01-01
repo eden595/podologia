@@ -23,6 +23,14 @@
         border: 2px solid #e91e63;
         margin: 0 auto 15px auto;
     }
+    /* Estilo extra para los botones de acción */
+    .btn-action-group {
+        opacity: 0.7;
+        transition: opacity 0.3s;
+    }
+    .card-equal:hover .btn-action-group {
+        opacity: 1;
+    }
 </style>
 
 <div class="row align-items-center mb-5 gy-3">
@@ -34,10 +42,10 @@
     <div class="col-lg-4">
         <form method="GET">
             <div class="input-group shadow-sm">
-                <span class="input-group-text border-secondary text-white" style="border-radius: 50px 0 0 50px !important; border-right: none !important;">
+                <span class="input-group-text border-secondary text-white" style="border-radius: 50px 0 0 50px !important; border-right: none !important; background-color: #2b2b2b;">
                     <span class="material-icons-round">search</span>
                 </span>
-                <input type="text" name="buscar" class="form-control border-secondary border-start-0 text-white" placeholder="Buscar por nombre o RUT..." value="{{ termino_busqueda|default:'' }}" style="border-radius: 0 50px 50px 0 !important;">
+                <input type="text" name="buscar" class="form-control border-secondary border-start-0 text-white" placeholder="Buscar por nombre o RUT..." value="{{ request.GET.buscar|default:'' }}" style="border-radius: 0 50px 50px 0 !important; background-color: #2b2b2b;">
             </div>
         </form>
     </div>
@@ -52,22 +60,31 @@
 <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4">
     {% for p in pacientes %}
     <div class="col">
-        <div class="card card-pro p-4 card-equal shadow">
+        <div class="card card-pro p-4 card-equal shadow" style="background-color: #1e1e1e; border: 1px solid #333;">
             <div class="avatar-circle shadow">
                 <span class="material-icons-round" style="color:#fff; font-size: 32px;">person</span>
             </div>
             
             <div class="text-center mb-3">
-                <h5 class="fw-bold text-white mb-1 text-truncate">{{ p.nombre }}</h5>
+                <h5 class="fw-bold text-white mb-1 text-truncate">{{ p.nombre }} {{ p.apellido }}</h5>
                 <span class="badge bg-dark border border-secondary text-secondary rounded-pill px-3">
-                    {{ p.rut }}
+                    {{ p.rut|default:"Sin RUT" }}
                 </span>
             </div>
 
             <div class="mt-auto">
-                <a href="{% url 'detalle_paciente' p.pk %}" class="btn btn-outline-light btn-oval-pro w-100 btn-sm d-flex align-items-center justify-content-center gap-2">
+                <a href="{% url 'detalle_paciente' p.pk %}" class="btn btn-outline-light btn-oval-pro w-100 btn-sm d-flex align-items-center justify-content-center gap-2 mb-2">
                     VER FICHA <span class="material-icons-round" style="font-size: 16px;">arrow_forward</span>
                 </a>
+
+                <div class="d-flex gap-2 btn-action-group">
+                    <a href="{% url 'editar_paciente' p.pk %}" class="btn btn-outline-warning btn-sm w-50" title="Editar datos">
+                        <span class="material-icons-round" style="font-size: 16px;">edit</span>
+                    </a>
+                    <a href="{% url 'eliminar_paciente' p.pk %}" class="btn btn-outline-danger btn-sm w-50" title="Eliminar paciente">
+                        <span class="material-icons-round" style="font-size: 16px;">delete</span>
+                    </a>
+                </div>
             </div>
         </div>
     </div>
