@@ -1,6 +1,46 @@
 {% extends 'pacientes/base.html' %}
 
 {% block content %}
+<style>
+    .upload-container {
+        background-color: rgba(255, 255, 255, 0.05);
+        border: 2px dashed #444;
+        border-radius: 20px;
+        transition: all 0.3s ease;
+    }
+    .upload-container:hover {
+        border-color: #e91e63;
+        background-color: rgba(233, 30, 99, 0.05);
+    }
+    /* Escondemos el input feo */
+    #actual-btn {
+        display: none;
+    }
+    /* Estilo del botón etiqueta */
+    .upload-btn-label {
+        background: linear-gradient(45deg, #e91e63, #c2185b);
+        color: white;
+        padding: 10px 25px;
+        font-family: sans-serif;
+        border-radius: 50px;
+        cursor: pointer;
+        transition: transform 0.2s;
+        box-shadow: 0 4px 15px rgba(233, 30, 99, 0.3);
+        display: inline-flex;
+        align-items: center;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+    }
+    .upload-btn-label:hover {
+        transform: translateY(-2px);
+    }
+    #file-chosen {
+        margin-left: 15px;
+        color: #bbbbbb;
+        font-style: italic;
+    }
+</style>
+
 <div class="row justify-content-center">
     <div class="col-md-8">
         <div class="card card-pro shadow border-0">
@@ -28,43 +68,76 @@
 
                     <hr class="border-secondary my-4">
 
-                    <h6 class="text-white mb-3">Gestión de Fotos</h6>
+                    <h6 class="text-white mb-3">
+                        <span class="material-icons-round align-middle me-1 text-danger">delete_sweep</span>
+                        Eliminar Fotos Existentes
+                    </h6>
                     
                     {% if object.fotos_tratamiento.all %}
-                        <p class="text-secondary small mb-2">Selecciona las fotos que deseas <span class="text-danger">ELIMINAR</span>:</p>
+                        <p class="text-secondary small mb-3">Marca la casilla roja en las fotos que quieras borrar:</p>
                         <div class="row g-3 mb-4">
                             {% for foto in object.fotos_tratamiento.all %}
                             <div class="col-4 col-sm-3">
                                 <div class="position-relative">
-                                    <img src="{{ foto.imagen.url }}" class="rounded shadow-sm w-100" style="aspect-ratio: 1/1; object-fit: cover;">
+                                    <img src="{{ foto.imagen.url }}" class="rounded shadow-sm w-100" style="aspect-ratio: 1/1; object-fit: cover; border: 1px solid #444;">
                                     <div class="form-check position-absolute top-0 end-0 m-1">
-                                        <input class="form-check-input bg-danger border-0" type="checkbox" name="borrar_foto_{{ foto.id }}" style="cursor: pointer; width: 20px; height: 20px;">
+                                        <input class="form-check-input bg-danger border-0 shadow" type="checkbox" name="borrar_foto_{{ foto.id }}" style="cursor: pointer; width: 22px; height: 22px;">
                                     </div>
                                 </div>
                             </div>
                             {% endfor %}
                         </div>
                     {% else %}
-                        <p class="text-white-50 small fst-italic">No hay fotos adicionales en este registro.</p>
+                        <p class="text-white-50 small fst-italic mb-4">No hay fotos adicionales en este registro.</p>
                     {% endif %}
 
-                    <div class="mb-4">
-                        <label class="text-white form-label small ms-2">Agregar Nuevas Fotos (Opcional)</label>
-                        <input type="file" name="nuevas_fotos_extra" multiple class="form-control">
-                        <small class="text-secondary">Puedes seleccionar varias a la vez.</small>
+                    <hr class="border-secondary my-4">
+
+                    <h6 class="text-white mb-3">
+                        <span class="material-icons-round align-middle me-1 text-success">add_photo_alternate</span>
+                        Agregar Nuevas Fotos
+                    </h6>
+
+                    <div class="upload-container p-4 mb-4 text-center">
+                        <input type="file" id="actual-btn" name="nuevas_fotos_extra" multiple accept="image/*">
+                        
+                        <label for="actual-btn" class="upload-btn-label mb-2">
+                            <span class="material-icons-round me-2">cloud_upload</span>
+                            Elegir archivos
+                        </label>
+                        
+                        <div id="preview-container" class="mt-2 d-none">
+                             <span class="material-icons-round align-middle text-success" style="font-size: 18px;">check_circle</span>
+                             <span id="file-chosen">Ningún archivo seleccionado</span>
+                        </div>
+
+                        <p class="text-white-50 small mb-0 mt-3">Sube imágenes adicionales (JPG, PNG) si lo necesitas.</p>
                     </div>
 
                     <div class="d-grid gap-2 mt-5">
-                        <button type="submit" class="btn btn-primary btn-oval-pro shadow-lg" style="background: #e91e63; border: none;">
+                        <button type="submit" class="btn btn-primary btn-oval-pro shadow-lg py-3" style="background: linear-gradient(45deg, #e91e63, #c2185b); border: none; font-size: 1.1rem;">
                             GUARDAR CAMBIOS
                         </button>
-                        <a href="{% url 'detalle_paciente' object.paciente.pk %}" class="btn btn-outline-light btn-oval-pro border-0">
-                            Cancelar
-                        </a>
                     </div>
                 </form>
             </div>
         </div>
     </div>
 </div>
+
+<script>
+    const actualBtn = document.getElementById('actual-btn');
+    const fileChosen = document.getElementById('file-chosen');
+    const previewContainer = document.getElementById('preview-container');
+
+    actualBtn.addEventListener('change', function(){
+        if (this.files.length > 0) {
+            fileChosen.textContent = this.files.length + " archivo(s) nuevo(s)";
+            previewContainer.classList.remove('d-none');
+        } else {
+            fileChosen.textContent = "Ningún archivo seleccionado";
+            previewContainer.classList.add('d-none');
+        }
+    });
+</script>
 {% endblock %}
