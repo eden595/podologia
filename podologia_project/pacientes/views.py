@@ -99,15 +99,31 @@ def registrar_tratamiento(request, pk):
 class TratamientoUpdateView(LoginRequiredMixin, UpdateView):
     model = Tratamiento
     form_class = TratamientoForm
-    # IMPORTANTE: Necesitamos crear este archivo (Paso 5)
     template_name = 'pacientes/formulario_tratamiento_editar.html'
     
-    def get_success_url(self):
-        return reverse_lazy('detalle_paciente', kwargs={'pk': self.object.paciente.pk})
+    def form_valid(self, form):
+        # 1. Guardar los cambios normales (texto y foto principal)
+        response = super().form_valid(form)
+        tratamiento = self.object
 
-class TratamientoDeleteView(LoginRequiredMixin, DeleteView):
-    model = Tratamiento
-    template_name = 'pacientes/eliminar_historial.html'
-    
+        # 2. AGREGAR FOTOS NUEVAS (Si subiste alguna)
+        nuevas_imagenes = self.request.FILES.getlist('nuevas_fotos_extra')
+        for img in nuevas_imagenes:
+            FotoTratamiento.objects.create(tratamiento=tratamiento, imagen=img)
+
+        # 3. BORRAR FOTOS SELECCIONADAS
+        # Buscamos en lo que enviaste cualquier checkbox que empiece con "borrar_foto_"
+        for key in self.request.POST:
+            if key.startswith('borrar_foto_'):
+                # El nombre es borrar_foto_15 -> el ID es 15
+                foto_id = key.split('_')[2] 
+                try:
+                    foto = FotoTratamiento.objects.get(id=foto_id, tratamiento=tratamiento)
+                    foto.delete() # ¡Adiós foto!
+                except FotoTratamiento.DoesNotExist:
+                    pass
+
+        return response
+
     def get_success_url(self):
         return reverse_lazy('detalle_paciente', kwargs={'pk': self.object.paciente.pk})

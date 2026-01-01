@@ -12,22 +12,40 @@
                 <form method="post" enctype="multipart/form-data">
                     {% csrf_token %}
                     
-                    <div class="alert alert-info small rounded-3 border-0 bg-dark text-white-50">
-                        <span class="material-icons-round align-middle me-1">info</span>
-                        Por seguridad, la firma del paciente y las fotos adicionales no se pueden modificar, solo el texto del procedimiento.
-                    </div>
-
                     <div class="mb-4">
                         <label class="text-white form-label small ms-2">Descripción del Procedimiento</label>
                         {{ form.procedimiento }}
                     </div>
 
+                    <hr class="border-secondary my-4">
+
+                    <h6 class="text-white mb-3">Gestión de Fotos</h6>
+                    
+                    {% if object.fotos_tratamiento.all %}
+                        <p class="text-secondary small mb-2">Selecciona las fotos que deseas <span class="text-danger">ELIMINAR</span>:</p>
+                        <div class="row g-3 mb-4">
+                            {% for foto in object.fotos_tratamiento.all %}
+                            <div class="col-4 col-sm-3">
+                                <div class="position-relative">
+                                    <img src="{{ foto.imagen.url }}" class="rounded shadow-sm w-100" style="aspect-ratio: 1/1; object-fit: cover;">
+                                    <div class="form-check position-absolute top-0 end-0 m-1">
+                                        <input class="form-check-input bg-danger border-0" type="checkbox" name="borrar_foto_{{ foto.id }}" style="cursor: pointer; width: 20px; height: 20px;">
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-white-50 small fst-italic">No hay fotos adicionales en este registro.</p>
+                    {% endif %}
+
                     <div class="mb-4">
-                        <label class="text-white form-label small ms-2">Foto Principal (Opcional - Reemplazar)</label>
-                        {{ form.foto }}
+                        <label class="text-white form-label small ms-2">Agregar Nuevas Fotos (Opcional)</label>
+                        <input type="file" name="nuevas_fotos_extra" multiple class="form-control">
+                        <small class="text-secondary">Puedes seleccionar varias a la vez.</small>
                     </div>
 
-                    <div class="d-grid gap-2">
+                    <div class="d-grid gap-2 mt-5">
                         <button type="submit" class="btn btn-primary btn-oval-pro shadow-lg" style="background: #e91e63; border: none;">
                             GUARDAR CAMBIOS
                         </button>
