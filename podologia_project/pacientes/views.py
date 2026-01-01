@@ -6,31 +6,27 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView
 from django.db import IntegrityError
 
-# Asegúrate de importar tus modelos y formularios correctamente
+# Importamos los modelos CORRECTOS según tu models.py
 from .models import Paciente, Tratamiento, FotoTratamiento
-from .forms import PacienteForm, HistorialForm 
-# Nota: Asumo que en forms.py llamaste a la clase 'HistorialForm' aunque el modelo sea 'Tratamiento'.
-# Si cambiaste el nombre en forms.py a 'TratamientoForm', actualiza la importación arriba.
+# Importamos los formularios corregidos
+from .forms import PacienteForm, TratamientoForm 
 
 # ==========================================
 #              GESTIÓN DE PACIENTES
 # ==========================================
 
-# 1. LISTAR PACIENTES (Con tu buscador integrado)
+# 1. LISTAR PACIENTES (Buscador integrado)
 class PacienteListView(LoginRequiredMixin, ListView):
     model = Paciente
     template_name = 'pacientes/lista_pacientes.html'
     context_object_name = 'pacientes'
-    paginate_by = 10  # Opcional: paginación
+    paginate_by = 10 
 
     def get_queryset(self):
-        # Recuperamos el queryset original
         queryset = super().get_queryset()
-        # Obtenemos el término de búsqueda de la URL
         termino = self.request.GET.get('buscar')
         
         if termino:
-            # Filtramos por nombre O rut (tu lógica original)
             queryset = queryset.filter(
                 Q(nombre__icontains=termino) | 
                 Q(rut__icontains=termino)
@@ -40,7 +36,6 @@ class PacienteListView(LoginRequiredMixin, ListView):
         return queryset
 
     def get_context_data(self, **kwargs):
-        # Pasamos el término al template para que se mantenga en la cajita de búsqueda
         context = super().get_context_data(**kwargs)
         context['termino_busqueda'] = self.request.GET.get('buscar', '')
         return context
@@ -51,11 +46,6 @@ class PacienteCreateView(LoginRequiredMixin, CreateView):
     form_class = PacienteForm
     template_name = 'pacientes/formulario_paciente.html'
     success_url = reverse_lazy('lista_pacientes')
-
-    def form_invalid(self, form):
-        # Si hay error (ej. RUT duplicado), Django lo maneja, 
-        # pero si quieres pasar un mensaje custom de IntegrityError manual:
-        return super().form_invalid(form)
 
 # 3. ACTUALIZAR PACIENTE
 class PacienteUpdateView(LoginRequiredMixin, UpdateView):
@@ -70,15 +60,17 @@ class PacienteDeleteView(LoginRequiredMixin, DeleteView):
     template_name = 'pacientes/eliminar_paciente.html'
     success_url = reverse_lazy('lista_pacientes')
 
-# 5. DETALLE PACIENTE (Ficha completa)
-# Mantenemos esto como función porque obtienes mucha info distinta (historial, fotos, etc.)
+# 5. DETALLE PACIENTE (La Ficha que te daba error)
 @login_required
 def detalle_paciente(request, pk):
+    # Buscamos al paciente
     paciente = get_object_or_404(Paciente, pk=pk)
-    # Aquí usamos 'Tratamiento' como en tu código original
+    
+    # Buscamos los TRATAMIENTOS (antes llamado Historial)
+    # El related_name no está definido en models, así que usamos _set o filtro directo
     historial = Tratamiento.objects.filter(paciente=paciente).order_by('-fecha')
     
-    # Manejo de errores por si no tienes el modelo FotoGaleria migrado aún
+    # Buscamos las fotos de galería (try/except por si acaso)
     try:
         fotos_galeria = paciente.fotos_galeria.all().order_by('-fecha_subida')
     except AttributeError:
@@ -95,8 +87,7 @@ def detalle_paciente(request, pk):
 #           GESTIÓN DE TRATAMIENTOS
 # ==========================================
 
-# 6. CREAR TRATAMIENTO (Mantenemos tu función original compleja)
-# Usamos función porque manejas request.FILES y lógica de checkbox manual
+# 6. CREAR TRATAMIENTO (Tu función personalizada con firma y fotos extra)
 @login_required
 def registrar_tratamiento(request, pk):
     paciente = get_object_or_404(Paciente, pk=pk)
@@ -105,16 +96,14 @@ def registrar_tratamiento(request, pk):
         seleccionados = request.POST.getlist('tratamientos_check')
         otros = request.POST.get('otros_texto', '')
         
-        # Unir lista de procedimientos
         procedimiento_final = ", ".join(seleccionados)
         if otros: 
             procedimiento_final += f" | Notas: {otros}"
 
-        # Crear el tratamiento 
+        # Crear el Objeto Tratamiento
         nuevo_tratamiento = Tratamiento.objects.create(
             paciente=paciente,
-            procedimiento=procedimiento_final, # Asegúrate que tu modelo tenga este campo o adapta el form
-            # Nota: Si usas HistorialForm para editar, este campo 'procedimiento' debe existir en el modelo
+            procedimiento=procedimiento_final,
             foto=request.FILES.getlist('fotos_extra')[0] if request.FILES.getlist('fotos_extra') else None, 
             firma=request.POST.get('firma_base64')
         )
@@ -131,17 +120,16 @@ def registrar_tratamiento(request, pk):
         
     return render(request, 'pacientes/formulario_tratamiento.html', {'paciente': paciente})
 
-# 7. EDITAR TRATAMIENTO (Nueva funcionalidad solicitada)
+# 7. EDITAR TRATAMIENTO (Corrección: Usamos Tratamiento y TratamientoForm)
 class TratamientoUpdateView(LoginRequiredMixin, UpdateView):
     model = Tratamiento
-    form_class = HistorialForm # Usamos el form que creamos en el paso anterior
-    template_name = 'pacientes/formulario_tratamiento_editar.html' # Nuevo template simple
+    form_class = TratamientoForm # <--- Formulario corregido
+    template_name = 'pacientes/formulario_tratamiento_editar.html'
     
     def get_success_url(self):
-        # Al guardar, volvemos a la ficha del paciente
         return reverse_lazy('detalle_paciente', kwargs={'pk': self.object.paciente.pk})
 
-# 8. ELIMINAR TRATAMIENTO (Nueva funcionalidad solicitada)
+# 8. ELIMINAR TRATAMIENTO (Corrección: Usamos Tratamiento)
 class TratamientoDeleteView(LoginRequiredMixin, DeleteView):
     model = Tratamiento
     template_name = 'pacientes/eliminar_historial.html'

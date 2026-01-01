@@ -1,20 +1,26 @@
 from django import forms
-from .models import Paciente, HistorialClinico
+from .models import Paciente, Tratamiento
 
 class PacienteForm(forms.ModelForm):
     class Meta:
         model = Paciente
-        fields = '__all__' # O haz una lista: ['nombre', 'edad', 'telefono']
-        # Puedes agregar widgets para que se vean mejor con tu CSS actual
-        widgets = {
-            'nombre': forms.TextInput(attrs={'class': 'form-control'}),
-            'fecha_nacimiento': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
-        }
-
-class HistorialForm(forms.ModelForm):
-    class Meta:
-        model = HistorialClinico
         fields = '__all__'
         widgets = {
-            'observaciones': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'nombre': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nombre completo'}),
+            'rut': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ej: [REDACTED_DB_PASSWORD]-9'}),
+            'telefono': forms.TextInput(attrs={'class': 'form-control'}),
+            'email': forms.EmailInput(attrs={'class': 'form-control'}),
+            'alergias': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
+            'observaciones_medicas': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+        }
+
+class TratamientoForm(forms.ModelForm):
+    class Meta:
+        model = Tratamiento
+        # Solo permitimos editar el texto y la foto principal. 
+        # La firma no se edita aquí para no romperla.
+        fields = ['procedimiento', 'foto'] 
+        widgets = {
+            'procedimiento': forms.Textarea(attrs={'class': 'form-control', 'rows': 4}),
+            'foto': forms.ClearableFileInput(attrs={'class': 'form-control'}),
         }
