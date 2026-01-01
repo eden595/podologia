@@ -90,3 +90,6 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 LOGIN_URL = 'login'
 LOGIN_REDIRECT_URL = 'lista_pacientes' # A donde va al entrar
 LOGOUT_REDIRECT_URL = 'login' # A donde va al salir
+
+DATA_UPLOAD_MAX_MEMORY_SIZE = 52428800 
+FILE_UPLOAD_MAX_MEMORY_SIZE = 52428800
