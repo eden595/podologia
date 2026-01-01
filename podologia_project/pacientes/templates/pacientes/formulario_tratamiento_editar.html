@@ -1,0 +1,32 @@
+{% extends 'pacientes/base.html' %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card card-pro shadow">
+            <div class="card-header bg-transparent border-0 pt-4">
+                <h3 class="text-white fw-bold">Editar Tratamiento</h3>
+                <p class="text-secondary">Paciente: {{ object.paciente.nombre }}</p>
+            </div>
+            <div class="card-body p-4">
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label class="text-white form-label">Procedimiento / Notas</label>
+                        {{ form.procedimiento }}
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="text-white form-label">Foto Principal (Opcional)</label>
+                        {{ form.foto }}
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-oval-pro">Guardar Cambios</button>
+                    <a href="{% url 'detalle_paciente' object.paciente.pk %}" class="btn btn-outline-light btn-oval-pro ms-2">Cancelar</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

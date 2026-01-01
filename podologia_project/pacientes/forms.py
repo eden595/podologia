@@ -17,8 +17,7 @@ class PacienteForm(forms.ModelForm):
 class TratamientoForm(forms.ModelForm):
     class Meta:
         model = Tratamiento
-        # Solo permitimos editar el texto y la foto principal. 
-        # La firma no se edita aquí para no romperla.
+        # Solo editamos el texto y la foto principal al actualizar
         fields = ['procedimiento', 'foto'] 
         widgets = {
             'procedimiento': forms.Textarea(attrs={'class': 'form-control', 'rows': 4}),
