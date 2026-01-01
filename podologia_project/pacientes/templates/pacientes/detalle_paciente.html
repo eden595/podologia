@@ -1,72 +1,153 @@
 {% extends "pacientes/base.html" %}
 
 {% block content %}
-<div class="card card-pro mb-4 border-0 shadow">
-    <div class="position-absolute start-0 top-0 bottom-0 bg-primary rounded-start" style="width: 5px; background: #e91e63 !important;"></div>
-    
-    <div class="card-body p-4 ms-2">
-        <div class="d-flex justify-content-between align-items-start mb-3">
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+        
+        <div class="d-flex justify-content-between align-items-center mb-4">
             <div>
-                <h5 class="fw-bold text-white mb-0">Atención Podológica</h5>
-                <div class="text-secondary small mt-1">
-                    <span class="material-icons-round align-middle" style="font-size: 14px;">calendar_today</span>
-                    {{ item.fecha|date:"d M, Y" }} - {{ item.fecha|date:"H:i" }} hrs.
-                </div>
+                <h2 class="fw-bold text-white mb-0">{{ paciente.nombre }}</h2>
+                <p class="text-secondary mb-0">RUT: {{ paciente.rut }}</p>
             </div>
-            
-            <div class="btn-group">
-                <a href="{% url 'editar_historial' item.pk %}" class="btn btn-outline-warning btn-sm" title="Editar Tratamiento">
-                    <span class="material-icons-round" style="font-size: 16px;">edit</span>
-                </a>
-                <a href="{% url 'eliminar_historial' item.pk %}" class="btn btn-outline-danger btn-sm" title="Borrar Tratamiento">
-                    <span class="material-icons-round" style="font-size: 16px;">delete</span>
-                </a>
-            </div>
+            <a href="{% url 'registrar_tratamiento' paciente.pk %}" class="btn btn-primary btn-oval-pro py-2 px-4 shadow-lg" style="background: #e91e63; border: none;">
+                <span class="material-icons-round align-middle me-1">add_circle</span> Nuevo Tratamiento
+            </a>
         </div>
 
-        <div class="p-3 rounded-3 mb-4" style="background: rgba(255,255,255,0.05);">
-            <p class="text-white-50 mb-0" style="white-space: pre-wrap;">{{ item.procedimiento }}</p>
-        </div>
-
-        <div class="mb-4">
-            <small class="text-secondary text-uppercase fw-bold d-block mb-2" style="font-size: 0.7rem;">Evidencia Fotográfica</small>
-            <div class="row g-2">
-                {% for foto_obj in item.fotos_tratamiento.all %}
-                    <div class="col-6 col-md-3 col-lg-2">
-                        <div class="ratio ratio-1x1 position-relative group-hover">
-                            <a href="{{ foto_obj.imagen.url }}" target="_blank">
-                                <img src="{{ foto_obj.imagen.url }}" class="rounded-3 border border-secondary shadow-sm w-100 h-100" style="object-fit: cover;">
-                            </a>
+        <div class="card card-pro mb-5 border-0 shadow-lg">
+            <div class="card-body p-4">
+                <div class="row g-4 text-white">
+                    <div class="col-md-3">
+                        <small class="text-secondary text-uppercase fw-bold" style="font-size: 0.7rem;">Teléfono</small>
+                        <div class="fw-bold">{{ paciente.telefono|default:"--" }}</div>
+                    </div>
+                    <div class="col-md-3">
+                        <small class="text-secondary text-uppercase fw-bold" style="font-size: 0.7rem;">Email</small>
+                        <div class="fw-bold">{{ paciente.email }}</div>
+                    </div>
+                    <div class="col-md-3">
+                        <small class="text-secondary text-uppercase fw-bold" style="font-size: 0.7rem;">Diabetes</small>
+                        <div>
+                            {% if paciente.diabetes %}
+                                <span class="badge bg-danger rounded-pill px-3">SÍ</span>
+                            {% else %}
+                                <span class="badge bg-secondary rounded-pill px-3 opacity-50">NO</span>
+                            {% endif %}
                         </div>
                     </div>
-                {% empty %}
-                    {% if item.foto %}
-                        <div class="col-6 col-md-3 col-lg-2">
-                            <div class="ratio ratio-1x1">
-                                <a href="{{ item.foto.url }}" target="_blank">
-                                    <img src="{{ item.foto.url }}" class="rounded-3 border border-secondary w-100 h-100" style="object-fit: cover;">
-                                </a>
+                    <div class="col-md-3">
+                        <small class="text-secondary text-uppercase fw-bold" style="font-size: 0.7rem;">Hipertensión</small>
+                        <div>
+                            {% if paciente.hipertension %}
+                                <span class="badge bg-warning text-dark rounded-pill px-3">SÍ</span>
+                            {% else %}
+                                <span class="badge bg-secondary rounded-pill px-3 opacity-50">NO</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    {% if paciente.alergias or paciente.observaciones_medicas %}
+                    <div class="col-12 mt-4 border-top border-secondary pt-3">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <small class="text-secondary text-uppercase fw-bold" style="font-size: 0.7rem;">Alergias</small>
+                                <p class="mb-0 small text-white-50">{{ paciente.alergias|default:"Ninguna" }}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <small class="text-secondary text-uppercase fw-bold" style="font-size: 0.7rem;">Observaciones</small>
+                                <p class="mb-0 small text-white-50">{{ paciente.observaciones_medicas|default:"--" }}</p>
                             </div>
                         </div>
-                    {% else %}
-                        <span class="text-secondary small fst-italic ms-1">Sin imágenes registradas.</span>
+                    </div>
                     {% endif %}
-                {% endfor %}
+                </div>
             </div>
         </div>
 
-        <div class="row mt-4 pt-3 border-top border-secondary">
-            <div class="col-md-6 offset-md-6 text-end">
-                <small class="text-secondary d-block mb-2">Conformidad del Paciente:</small>
-                {% if item.firma %}
-                    <div class="d-inline-block bg-white rounded-3 p-2 shadow-sm" style="transform: rotate(-2deg);">
-                        <img src="{{ item.firma }}" style="height: 60px; max-width: 200px; filter: contrast(1.2);">
+        <h5 class="text-secondary fw-bold mb-4 ps-2 border-start border-4 border-primary">Historial Clínico</h5>
+
+        {% for item in historial %}
+        <div class="card card-pro mb-4 border-0 shadow">
+            <div class="position-absolute start-0 top-0 bottom-0 bg-primary rounded-start" style="width: 5px; background: #e91e63 !important;"></div>
+            
+            <div class="card-body p-4 ms-2">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div>
+                        <h5 class="fw-bold text-white mb-0">Atención Podológica</h5>
+                        <div class="text-secondary small mt-1">
+                            <span class="material-icons-round align-middle" style="font-size: 14px;">calendar_today</span>
+                            {{ item.fecha|date:"d M, Y" }} - {{ item.fecha|date:"H:i" }} hrs.
+                        </div>
                     </div>
-                {% else %}
-                    <span class="badge bg-secondary opacity-25">Sin firma</span>
-                {% endif %}
+                    
+                    <div class="btn-group">
+                        {% if item.pk %}
+                            <a href="{% url 'editar_historial' item.pk %}" class="btn btn-outline-warning btn-sm" title="Editar Tratamiento">
+                                <span class="material-icons-round" style="font-size: 16px;">edit</span>
+                            </a>
+                            <a href="{% url 'eliminar_historial' item.pk %}" class="btn btn-outline-danger btn-sm" title="Borrar Tratamiento">
+                                <span class="material-icons-round" style="font-size: 16px;">delete</span>
+                            </a>
+                        {% else %}
+                             <span class="badge bg-danger small" title="Error de datos: ID no encontrado">Error Data</span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="p-3 rounded-3 mb-4" style="background: rgba(255,255,255,0.05);">
+                    <p class="text-white-50 mb-0" style="white-space: pre-wrap;">{{ item.procedimiento }}</p>
+                </div>
+
+                <div class="mb-4">
+                    <small class="text-secondary text-uppercase fw-bold d-block mb-2" style="font-size: 0.7rem;">Evidencia Fotográfica</small>
+                    
+                    <div class="row g-2">
+                        {% for foto_obj in item.fotos_tratamiento.all %}
+                            <div class="col-6 col-md-3 col-lg-2">
+                                <div class="ratio ratio-1x1 position-relative group-hover">
+                                    <a href="{{ foto_obj.imagen.url }}" target="_blank">
+                                        <img src="{{ foto_obj.imagen.url }}" class="rounded-3 border border-secondary shadow-sm w-100 h-100" style="object-fit: cover; transition: transform 0.2s;">
+                                    </a>
+                                </div>
+                            </div>
+                        {% empty %}
+                            {% if item.foto %}
+                                <div class="col-6 col-md-3 col-lg-2">
+                                    <div class="ratio ratio-1x1">
+                                        <a href="{{ item.foto.url }}" target="_blank">
+                                            <img src="{{ item.foto.url }}" class="rounded-3 border border-secondary w-100 h-100" style="object-fit: cover;">
+                                        </a>
+                                    </div>
+                                </div>
+                            {% else %}
+                                <span class="text-secondary small fst-italic ms-1">Sin imágenes registradas.</span>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div class="row mt-4 pt-3 border-top border-secondary">
+                    <div class="col-md-6 offset-md-6 text-end">
+                        <small class="text-secondary d-block mb-2">Conformidad del Paciente:</small>
+                        {% if item.firma %}
+                            <div class="d-inline-block bg-white rounded-3 p-2 shadow-sm" style="transform: rotate(-2deg);">
+                                <img src="{{ item.firma }}" style="height: 60px; max-width: 200px; filter: contrast(1.2);">
+                            </div>
+                        {% else %}
+                            <span class="badge bg-secondary opacity-25">Sin firma</span>
+                        {% endif %}
+                    </div>
+                </div>
+
             </div>
         </div>
+        {% empty %}
+            <div class="text-center py-5 text-secondary opacity-50">
+                <span class="material-icons-round" style="font-size: 48px;">folder_off</span>
+                <p class="mt-2">No hay atenciones registradas aún.</p>
+            </div>
+        {% endfor %}
+
     </div>
 </div>
 {% endblock %}
