@@ -48,6 +48,17 @@
                             <input type="email" name="email" class="form-control" placeholder="nombre@correo.com" 
                                    value="{{ form.instance.email|default_if_none:'' }}" required>
                         </div>
+
+                        <div class="col-12">
+                            <label class="form-label text-white ms-3 small">Dirección Particular</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-dark border-secondary text-secondary" style="border-top-left-radius: 50px; border-bottom-left-radius: 50px;">
+                                    <span class="material-icons-round" style="font-size: 20px;">home</span>
+                                </span>
+                                <input type="text" name="direccion" class="form-control" placeholder="Calle, Número, Villa/Población, Comuna" 
+                                       value="{{ form.instance.direccion|default_if_none:'' }}" style="border-left: none;">
+                            </div>
+                        </div>
                     </div>
 
                     <h6 class="text-secondary text-uppercase fw-bold mb-4 small mt-5" style="letter-spacing: 1px;">Antecedentes Médicos</h6>
