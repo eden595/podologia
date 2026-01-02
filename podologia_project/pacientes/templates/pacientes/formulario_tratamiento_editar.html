@@ -38,17 +38,19 @@
         color: #bbbbbb;
         font-style: italic;
     }
-    /* CLAVE PARA EL CELULAR: El contenedor de la firma se adapta */
+    
+    /* ESTILOS PARA LA FIRMA RESPONSIVE */
     .signature-wrapper {
         width: 100%;
         position: relative;
         background: white;
         border-radius: 15px;
-        overflow: hidden; /* Corta cualquier sobrante */
+        overflow: hidden; 
     }
     canvas {
         display: block;
-        width: 100%; /* Fuerza al canvas a no pasarse del ancho */
+        width: 100%; /* IMPORTANTE: Ocupa todo el ancho disponible */
+        height: 200px;
     }
 </style>
 
@@ -118,7 +120,6 @@
                         <p class="text-white-50 small mb-0 mt-2">Puedes subir múltiples imágenes (JPG, PNG) desde tu dispositivo.</p>
                     </div>
 
-
                     <hr class="border-secondary my-5 opacity-50">
 
                     <h6 class="text-secondary text-uppercase fw-bold mb-4 small" style="letter-spacing: 1px;">
@@ -127,7 +128,7 @@
                     </h6>
                     
                     <div class="signature-wrapper mb-3 shadow-sm">
-                        <canvas id="signature-pad" style="touch-action: none; width: 100%; height: 200px;"></canvas>
+                        <canvas id="signature-pad"></canvas>
                     </div>
                     
                     <input type="hidden" name="firma_base64" id="firma_base64">
@@ -151,7 +152,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
 <script>
-    // --- SCRIPT DEL NUEVO BOTÓN DE FOTOS ---
+    // --- BOTÓN FOTOS ---
     const actualBtn = document.getElementById('actual-btn');
     const fileChosen = document.getElementById('file-chosen');
     const previewContainer = document.getElementById('preview-container');
@@ -166,34 +167,35 @@
         }
     });
 
-
-    // --- SCRIPT DE LA FIRMA (RESPONSIVE) ---
+    // --- FIRMA DIGITAL RESPONSIVE ---
     var canvas = document.getElementById('signature-pad');
     var signaturePad = new SignaturePad(canvas, {
         backgroundColor: 'rgb(255, 255, 255)',
         penColor: 'rgb(0, 0, 0)'
     });
 
-    // Función mágica para que el canvas cambie de tamaño según el celular
+    // Esta función es la MAGIA que arregla el tamaño en celulares
     function resizeCanvas() {
         var ratio = Math.max(window.devicePixelRatio || 1, 1);
         
-        // Guardamos la firma actual si existe
+        // Guardamos la firma si ya existe
         var data = signaturePad.toData();
         
-        // Ajustamos el tamaño interno del canvas al tamaño visual de la pantalla
+        // Ajustamos el tamaño interno del canvas al tamaño real de la pantalla
         canvas.width = canvas.offsetWidth * ratio;
         canvas.height = canvas.offsetHeight * ratio;
         canvas.getContext("2d").scale(ratio, ratio);
         
-        // Restauramos la firma (limpiándola primero para evitar dobles trazos)
-        signaturePad.clear();
+        // Restauramos la firma
+        signaturePad.clear(); 
         signaturePad.fromData(data);
     }
 
-    // Escuchamos cuando la pantalla cambia de tamaño (rotar celular)
+    // Escuchar cuando se gira la pantalla o cambia el tamaño
     window.addEventListener("resize", resizeCanvas);
-    resizeCanvas(); // Llamar al inicio
+    
+    // Ejecutar al inicio para asegurar el tamaño correcto
+    resizeCanvas();
 
     document.getElementById('clear-signature').addEventListener('click', function () {
         signaturePad.clear();
