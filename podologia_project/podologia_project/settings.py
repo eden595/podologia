@@ -1,29 +1,23 @@
 import os
 from pathlib import Path
-from dotenv import load_dotenv
+
+os.environ['CLOUDINARY_URL'] = '[REDACTED_CLOUDINARY_URL]'
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Cargar el archivo .env
-# Esto leerá CLOUDINARY_URL, SECRET_KEY y DB_PASSWORD de tu archivo oculto
-env_path = os.path.join(BASE_DIR, '.env')
-load_dotenv(env_path)
-
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.getenv('SECRET_KEY')
+SECRET_KEY = '[REDACTED_DJANGO_SECRET_KEY]'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-# Ojo: En producción real en PythonAnywhere, idealmente esto debería ser False
-DEBUG = True 
+DEBUG = True
 
 ALLOWED_HOSTS = ['eden2001.pythonanywhere.com', '127.0.0.1', 'localhost']
-
 # Application definition
 INSTALLED_APPS = [
     'cloudinary_storage',
     'cloudinary',
-    'pacientes.apps.PacientesConfig',
+    'pacientes.apps.PacientesConfig', # Recomendado usar la config completa
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -47,8 +41,8 @@ ROOT_URLCONF = 'podologia_project.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'templates'],
-        'APP_DIRS': True,
+        'DIRS': [BASE_DIR / 'templates'], # Carpeta global de templates (opcional)
+        'APP_DIRS': True, # Busca dentro de la carpeta templates de cada app
         'OPTIONS': {
             'context_processors': [
                 'django.template.context_processors.debug',
@@ -66,10 +60,9 @@ WSGI_APPLICATION = 'podologia_project.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'eden2001$default', 
+        'NAME': 'eden2001$default', # CORREGIDO: Verifica que tu BD en phpMyAdmin se llame así
         'USER': 'eden2001',
-        # Aquí usamos la variable de entorno para seguridad
-        'PASSWORD': os.getenv('DB_PASSWORD'), 
+        'PASSWORD': '[REDACTED_DB_PASSWORD]', # Generalmente en XAMPP local es vacío, si tienes clave ponla aquí.
         'HOST': 'eden2001.mysql.pythonanywhere-services.com',
         'PORT': '3306',
     }
@@ -91,33 +84,24 @@ USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 STATIC_URL = 'static/'
-# PythonAnywhere usará STATIC_ROOT para servir archivos
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-
-# Opcional: Solo si tienes una carpeta 'static' local con CSS propios para desarrollo
 STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static'),] 
-
-# Media Files (Cloudinary)
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+# Media Files (Para las fotos de los tratamientos)
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 # Login / Logout config
 LOGIN_URL = 'login'
-LOGIN_REDIRECT_URL = 'lista_pacientes'
-LOGOUT_REDIRECT_URL = 'login'
+LOGIN_REDIRECT_URL = 'lista_pacientes' # A donde va al entrar
+LOGOUT_REDIRECT_URL = 'login' # A donde va al salir
 
 DATA_UPLOAD_MAX_MEMORY_SIZE = 52428800 
 FILE_UPLOAD_MAX_MEMORY_SIZE = 52428800
 
-# Configuración Cloudinary
-# Ya no hace falta poner os.environ aquí arriba porque load_dotenv ya cargó CLOUDINARY_URL
 CLOUDINARY_STORAGE = {
-    'CLOUD_NAME': 'dezml9ony', # Opcional si ya está en la URL, pero bueno tenerlo
-    'API_KEY': '914967166155654', # Opcional si ya está en la URL
-    'API_SECRET': os.getenv('CLOUDINARY_API_SECRET'), # Si quisieras separarlo, pero con la URL basta
-    'SECURE': True,
+    
+    'SECURE': True,  # Puedes dejar esto
 }
-
 STORAGES = {
     "default": {
         "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
