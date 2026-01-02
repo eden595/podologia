@@ -1,8 +1,6 @@
 import os
 from pathlib import Path
-import cloudinary
-import cloudinary.uploader
-import cloudinary.api
+os.environ['CLOUDINARY_URL'] = '[REDACTED_CLOUDINARY_URL]'
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -99,23 +97,10 @@ LOGOUT_REDIRECT_URL = 'login' # A donde va al salir
 DATA_UPLOAD_MAX_MEMORY_SIZE = 52428800 
 FILE_UPLOAD_MAX_MEMORY_SIZE = 52428800
 
-cloudinary.config(
-    cloud_name = 'dezml9ony',
-    api_key = '914967166155654',
-    api_secret = 'FJkuuyk-qUrzWrqtPTSJKMKwVdE',
-    api_proxy = 'http://proxy.server:3128'  # <--- ESTA es la línea mágica
-)
-
-# 2. Configuración para el almacenamiento de Django
 CLOUDINARY_STORAGE = {
-    'CLOUD_NAME': 'dezml9ony',
-    'API_KEY': '914967166155654',
-    'API_SECRET': 'FJkuuyk-qUrzWrqtPTSJKMKwVdE',
-    'API_PROXY': 'http://proxy.server:3128',  # <--- AGREGA ESTA LÍNEA
-    'SECURE': True, # Recomendado para forzar HTTPS
+    
+    'SECURE': True,  # Puedes dejar esto
 }
-os.environ['CLOUDINARY_URL'] = '[REDACTED_CLOUDINARY_URL]'
-# 3. Definir los Almacenamientos (Esto ya lo tenías bien, déjalo así o pégalo por si acaso)
 STORAGES = {
     "default": {
         "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
