@@ -103,6 +103,7 @@ CLOUDINARY_STORAGE = {
     'CLOUD_NAME': 'dezml9ony', 
     'API_KEY': '914967166155654',
     'API_SECRET': 'FJkuuyk-qUrzWrqtPTSJKMKwVdE',
+    'API_PROXY': 'http://proxy.server:3128'
 }
 
 # Esto le dice a Django que use Cloudinary para las fotos
