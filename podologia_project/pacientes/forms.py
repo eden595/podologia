@@ -18,8 +18,9 @@ class TratamientoForm(forms.ModelForm):
     class Meta:
         model = Tratamiento
         # Solo editamos el texto y la foto principal al actualizar
-        fields = ['procedimiento', 'foto'] 
+        fields = ['fecha', 'procedimiento', 'foto']
         widgets = {
+            'fecha': forms.DateTimeInput(attrs={'class': 'form-control', 'type': 'datetime-local'}),
             'procedimiento': forms.Textarea(attrs={'class': 'form-control', 'rows': 4}),
             'foto': forms.ClearableFileInput(attrs={'class': 'form-control'}),
         }

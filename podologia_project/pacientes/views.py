@@ -4,6 +4,7 @@ from django.db.models import Q
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView
+from django.utils import timezone # Importar timezone
 from .models import Paciente, Tratamiento, FotoTratamiento
 from .forms import PacienteForm, TratamientoForm 
 
@@ -77,6 +78,7 @@ def registrar_tratamiento(request, pk):
     if request.method == "POST":
         seleccionados = request.POST.getlist('tratamientos_check')
         otros = request.POST.get('otros_texto', '')
+        fecha_input = request.POST.get('fecha') # Capturamos la fecha
         
         procedimiento_final = ", ".join(seleccionados)
         if otros: 
@@ -85,16 +87,19 @@ def registrar_tratamiento(request, pk):
             else:
                 procedimiento_final = f"Notas: {otros}"
 
+        # Si el usuario no puso fecha, usar ahora mismo
+        fecha_final = fecha_input if fecha_input else timezone.now()
+
         # Crear Tratamiento
         nuevo_tratamiento = Tratamiento.objects.create(
             paciente=paciente,
+            fecha=fecha_final, # Guardamos la fecha elegida
             procedimiento=procedimiento_final,
-            # Guardamos la primera foto como principal si existe
             foto=request.FILES.getlist('fotos_extra')[0] if request.FILES.getlist('fotos_extra') else None, 
             firma=request.POST.get('firma_base64')
         )
 
-        # Guardar fotos EXTRA (Todas)
+        # Guardar fotos EXTRA
         imagenes_extra = request.FILES.getlist('fotos_extra')
         for img in imagenes_extra:
             FotoTratamiento.objects.create(
@@ -115,7 +120,7 @@ class TratamientoUpdateView(LoginRequiredMixin, UpdateView):
         response = super().form_valid(form)
         tratamiento = self.object
 
-        # 1. ACTUALIZAR FIRMA (Si se modificó)
+        # 1. ACTUALIZAR FIRMA
         nueva_firma = self.request.POST.get('firma_base64')
         if nueva_firma and "data:image" in nueva_firma:
             tratamiento.firma = nueva_firma

@@ -2,7 +2,6 @@
 
 {% block content %}
 <style>
-    /* Estilos responsive para la firma y carga */
     .signature-wrapper {
         width: 100%;
         position: relative;
@@ -55,6 +54,12 @@
                 <form method="post" enctype="multipart/form-data" id="editForm">
                     {% csrf_token %}
                     
+                    <div class="mb-4">
+                        <label class="text-white form-label small ms-2">Fecha del Procedimiento</label>
+                        <input type="datetime-local" name="fecha" class="form-control" style="border-radius: 20px;"
+                               value="{{ object.fecha|date:'Y-m-d\TH:i' }}">
+                    </div>
+
                     <div class="mb-4">
                         <label class="text-white form-label small ms-2">Descripción del Procedimiento</label>
                         {{ form.procedimiento }}
@@ -131,7 +136,6 @@
 
 <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
 <script>
-    // --- FOTOS ---
     const actualBtn = document.getElementById('actual-btn');
     const fileChosen = document.getElementById('file-chosen');
     const previewContainer = document.getElementById('preview-container');
@@ -146,7 +150,6 @@
         }
     });
 
-    // --- FIRMA RESPONSIVE ---
     var canvas = document.getElementById('signature-pad');
     var signaturePad = new SignaturePad(canvas, {
         backgroundColor: 'rgb(255, 255, 255)',
@@ -155,12 +158,12 @@
 
     function resizeCanvas() {
         var ratio = Math.max(window.devicePixelRatio || 1, 1);
-        var data = signaturePad.toData(); // Guardar dibujo
+        var data = signaturePad.toData(); 
         canvas.width = canvas.offsetWidth * ratio;
         canvas.height = canvas.offsetHeight * ratio;
         canvas.getContext("2d").scale(ratio, ratio);
         signaturePad.clear();
-        signaturePad.fromData(data); // Restaurar dibujo
+        signaturePad.fromData(data); 
     }
 
     window.addEventListener("resize", resizeCanvas);
@@ -171,7 +174,6 @@
     });
 
     document.getElementById('editForm').addEventListener('submit', function (e) {
-        // Solo guardamos la firma si el usuario dibujó algo nuevo
         if (!signaturePad.isEmpty()) {
             document.getElementById('firma_base64').value = signaturePad.toDataURL('image/png');
         }

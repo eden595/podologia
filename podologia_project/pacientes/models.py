@@ -1,10 +1,12 @@
 from django.db import models
+from django.utils import timezone # <--- IMPORTANTE: Agrega esta línea arriba
 
 class Paciente(models.Model):
     nombre = models.CharField(max_length=100)
     rut = models.CharField(max_length=15, unique=True)
     telefono = models.CharField(max_length=20, blank=True, null=True)
-    direccion = models.CharField(max_length=200, blank=True, null=True) # ⬅️ AGREGA ESTA LÍNEA
+    direccion = models.CharField(max_length=200, blank=True, null=True)
+    
     # Ficha Técnica
     diabetes = models.BooleanField(default=False)
     hipertension = models.BooleanField(default=False)
@@ -16,7 +18,8 @@ class Paciente(models.Model):
 
 class Tratamiento(models.Model):
     paciente = models.ForeignKey(Paciente, on_delete=models.CASCADE)
-    fecha = models.DateTimeField(auto_now_add=True)
+    # CAMBIO AQUÍ: Ahora la fecha es editable
+    fecha = models.DateTimeField(default=timezone.now) 
     procedimiento = models.TextField()
     foto = models.ImageField(upload_to='tratamientos/', null=True, blank=True)
     firma = models.TextField() 
@@ -25,7 +28,6 @@ class Tratamiento(models.Model):
         return f"{self.paciente.nombre} - {self.fecha.strftime('%d/%m/%Y')}"
 
 class FotoGaleria(models.Model):
-    # Esta línea conecta la foto con UN paciente. Si borras al paciente, se borran sus fotos.
     paciente = models.ForeignKey(Paciente, on_delete=models.CASCADE, related_name='fotos_galeria')
     imagen = models.ImageField(upload_to='historial_medico/')
     fecha_subida = models.DateTimeField(auto_now_add=True)

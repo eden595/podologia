@@ -1,106 +1,193 @@
 {% extends "pacientes/base.html" %}
 
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-lg-10">
-        <div class="card card-pro shadow-lg">
-            <div class="card-body p-5">
-                <div class="text-center mb-5">
-                    <h2 class="fw-bold text-white">Nuevo Registro Clínico</h2>
-                    <p class="text-secondary">Paciente: <span class="text-primary fw-bold">{{ paciente.nombre }}</span></p>
-                </div>
+<style>
+    .upload-container {
+        background-color: rgba(255, 255, 255, 0.05);
+        border: 2px dashed #444;
+        border-radius: 20px;
+        transition: all 0.3s ease;
+    }
+    .upload-container:hover {
+        border-color: #e91e63;
+        background-color: rgba(233, 30, 99, 0.05);
+    }
+    #actual-btn { display: none; }
+    .upload-btn-label {
+        background: linear-gradient(45deg, #e91e63, #c2185b);
+        color: white;
+        padding: 12px 25px;
+        font-family: sans-serif;
+        border-radius: 50px;
+        cursor: pointer;
+        transition: transform 0.2s;
+        box-shadow: 0 4px 15px rgba(233, 30, 99, 0.3);
+        display: inline-flex;
+        align-items: center;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+    }
+    .upload-btn-label:hover { transform: translateY(-2px); }
+    #file-chosen {
+        margin-left: 15px;
+        font-family: sans-serif;
+        color: #bbbbbb;
+        font-style: italic;
+    }
+    .signature-wrapper {
+        width: 100%;
+        position: relative;
+        background: white;
+        border-radius: 15px;
+        overflow: hidden;
+        border: 1px solid #ccc;
+    }
+    canvas {
+        display: block;
+        width: 100%;
+        height: 200px;
+    }
+</style>
 
-                <form method="POST" id="form-tratamiento" enctype="multipart/form-data">
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="d-flex align-items-center mb-4">
+            <a href="{% url 'detalle_paciente' paciente.pk %}" class="text-decoration-none me-3">
+                <span class="material-icons-round" style="font-size: 36px; color: #e91e63;">arrow_back</span>
+            </a>
+            <div>
+                <h2 class="fw-bold text-white mb-0">Nueva Atención</h2>
+                <p class="text-secondary mb-0">Paciente: <strong class="text-primary">{{ paciente.nombre }}</strong></p>
+            </div>
+        </div>
+
+        <div class="card card-pro shadow-lg border-0">
+            <div class="card-body p-4 p-md-5">
+                
+                <form method="POST" enctype="multipart/form-data" id="tratamientoForm">
                     {% csrf_token %}
                     
-                    <h6 class="text-white fw-bold mb-3 border-bottom border-secondary pb-2">1. Procedimientos Realizados</h6>
+                    <div class="mb-4">
+                        <label class="form-label text-white ms-3 small">Fecha y Hora de Atención</label>
+                        <input type="datetime-local" name="fecha" class="form-control" style="border-radius: 20px;" 
+                               value="{% now 'Y-m-d\TH:i' %}">
+                    </div>
+
+                    <h6 class="text-secondary text-uppercase fw-bold mb-4 small" style="letter-spacing: 1px;">
+                        <span class="material-icons-round align-middle me-1 text-primary">checklist</span>
+                        Procedimientos Realizados
+                    </h6>
                     
-                    <div class="row g-2 mb-5">
-                        <div class="col-6 col-md-3">
-                            <input type="checkbox" class="btn-check" name="tratamientos_check" value="ONICOTOMÍA" id="t1" autocomplete="off">
-                            <label class="btn btn-outline-secondary w-100 btn-oval-pro" for="t1">ONICOTOMÍA</label>
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <label class="p-3 rounded-4 border border-secondary d-flex align-items-center justify-content-between group-hover" style="background: #252525; cursor: pointer;">
+                                <span class="text-white mb-0 fw-medium">Onicotomía</span>
+                                <div class="form-check mb-0">
+                                    <input class="form-check-input" type="checkbox" name="tratamientos_check" value="Onicotomía" style="width: 25px; height: 25px; border-color: #e91e63;">
+                                </div>
+                            </label>
                         </div>
-                        <div class="col-6 col-md-3">
-                            <input type="checkbox" class="btn-check" name="tratamientos_check" value="DEBASTADO UNGUEAL" id="t2" autocomplete="off">
-                            <label class="btn btn-outline-secondary w-100 btn-oval-pro" for="t2">DEBASTADO</label>
+                        <div class="col-md-6">
+                            <label class="p-3 rounded-4 border border-secondary d-flex align-items-center justify-content-between group-hover" style="background: #252525; cursor: pointer;">
+                                <span class="text-white mb-0 fw-medium">Debastado de Lámina</span>
+                                <div class="form-check mb-0">
+                                    <input class="form-check-input" type="checkbox" name="tratamientos_check" value="Debastado de Lámina" style="width: 25px; height: 25px; border-color: #e91e63;">
+                                </div>
+                            </label>
                         </div>
-                        <div class="col-6 col-md-3">
-                            <input type="checkbox" class="btn-check" name="tratamientos_check" value="DESPICULIZACIÓN" id="t3" autocomplete="off">
-                            <label class="btn btn-outline-secondary w-100 btn-oval-pro" for="t3">DESPICULIZACIÓN</label>
+                        <div class="col-md-6">
+                            <label class="p-3 rounded-4 border border-secondary d-flex align-items-center justify-content-between group-hover" style="background: #252525; cursor: pointer;">
+                                <span class="text-white mb-0 fw-medium">Resecado de Hiperqueratosis</span>
+                                <div class="form-check mb-0">
+                                    <input class="form-check-input" type="checkbox" name="tratamientos_check" value="Resecado de Hiperqueratosis" style="width: 25px; height: 25px; border-color: #e91e63;">
+                                </div>
+                            </label>
                         </div>
-                        <div class="col-6 col-md-3">
-                            <input type="checkbox" class="btn-check" name="tratamientos_check" value="ENUCLACIÓN" id="t4" autocomplete="off">
-                            <label class="btn btn-outline-secondary w-100 btn-oval-pro" for="t4">ENUCLACIÓN</label>
+                        <div class="col-md-6">
+                            <label class="p-3 rounded-4 border border-secondary d-flex align-items-center justify-content-between group-hover" style="background: #252525; cursor: pointer;">
+                                <span class="text-white mb-0 fw-medium">Curación</span>
+                                <div class="form-check mb-0">
+                                    <input class="form-check-input" type="checkbox" name="tratamientos_check" value="Curación" style="width: 25px; height: 25px; border-color: #e91e63;">
+                                </div>
+                            </label>
                         </div>
-                        <div class="col-6 col-md-3">
-                            <input type="checkbox" class="btn-check" name="tratamientos_check" value="CURACIÓN" id="t5" autocomplete="off">
-                            <label class="btn btn-outline-secondary w-100 btn-oval-pro" for="t5">CURACIÓN</label>
+                        <div class="col-md-6">
+                            <label class="p-3 rounded-4 border border-secondary d-flex align-items-center justify-content-between group-hover" style="background: #252525; cursor: pointer;">
+                                <span class="text-white mb-0 fw-medium">Espiculectomía</span>
+                                <div class="form-check mb-0">
+                                    <input class="form-check-input" type="checkbox" name="tratamientos_check" value="Espiculectomía" style="width: 25px; height: 25px; border-color: #e91e63;">
+                                </div>
+                            </label>
                         </div>
-                        <div class="col-6 col-md-3">
-                            <input type="checkbox" class="btn-check" name="tratamientos_check" value="LÁSER ONICOMICOSIS" id="t6" autocomplete="off">
-                            <label class="btn btn-outline-secondary w-100 btn-oval-pro" for="t6">LÁSER</label>
+                        <div class="col-md-6">
+                            <label class="p-3 rounded-4 border border-secondary d-flex align-items-center justify-content-between group-hover" style="background: #252525; cursor: pointer;">
+                                <span class="text-white mb-0 fw-medium">Ortonixia</span>
+                                <div class="form-check mb-0">
+                                    <input class="form-check-input" type="checkbox" name="tratamientos_check" value="Ortonixia" style="width: 25px; height: 25px; border-color: #e91e63;">
+                                </div>
+                            </label>
                         </div>
-                        <div class="col-6 col-md-3">
-                            <input type="checkbox" class="btn-check" name="tratamientos_check" value="MASAJE PODAL" id="t7" autocomplete="off">
-                            <label class="btn btn-outline-secondary w-100 btn-oval-pro" for="t7">MASAJE</label>
-                        </div>
-                        <div class="col-6 col-md-3">
-                            <input type="checkbox" class="btn-check" name="tratamientos_check" value="EDUCACIÓN" id="t8" autocomplete="off">
-                            <label class="btn btn-outline-secondary w-100 btn-oval-pro" for="t8">EDUCACIÓN</label>
+                        <div class="col-md-6">
+                            <label class="p-3 rounded-4 border border-secondary d-flex align-items-center justify-content-between group-hover" style="background: #252525; cursor: pointer;">
+                                <span class="text-white mb-0 fw-medium">Onicoplastía</span>
+                                <div class="form-check mb-0">
+                                    <input class="form-check-input" type="checkbox" name="tratamientos_check" value="Onicoplastía" style="width: 25px; height: 25px; border-color: #e91e63;">
+                                </div>
+                            </label>
                         </div>
                     </div>
 
                     <div class="mb-4">
-                        <label class="form-label text-white ms-3 small">Notas Adicionales</label>
-                        <textarea name="otros_texto" class="form-control" rows="3" style="border-radius: 20px;" placeholder="Detalles extra del procedimiento..."></textarea>
+                        <label class="form-label text-white ms-3 small">Notas / Otros Procedimientos</label>
+                        <textarea name="otros_texto" class="form-control" rows="3" style="border-radius: 20px;" placeholder="Detalles adicionales de la atención..."></textarea>
                     </div>
 
-                    <h6 class="text-white fw-bold mb-3 border-bottom border-secondary pb-2 mt-5">2. Evidencia y Consentimiento</h6>
-                    
-                    <div class="row g-4 mb-5">
-                        <div class="col-md-12">
-                            <label class="form-label text-white ms-3 small">Fotografías del Procedimiento</label>
-                            
-                            <div class="upload-zone text-center p-4 rounded-4 position-relative" id="drop-zone" style="border: 2px dashed #555; background: rgba(255,255,255,0.05); transition: all 0.3s ease;">
-                                <input type="file" name="fotos_extra" id="fotos_input" multiple class="position-absolute top-0 start-0 w-100 h-100 opacity-0" style="cursor: pointer;" accept="image/*">
-                                
-                                <div class="pointer-events-none">
-                                    <div class="mb-2">
-                                        <span class="material-icons-round text-primary" style="font-size: 40px;">add_photo_alternate</span>
-                                    </div>
-                                    <h6 class="text-white mb-1">Haz clic aquí para agregar fotos</h6>
-                                    <small class="text-secondary" id="file-count">Puedes seleccionar varias imágenes a la vez</small>
-                                </div>
-                            </div>
-                            </div>
+                    <hr class="border-secondary my-5 opacity-50">
+
+                    <h6 class="text-secondary text-uppercase fw-bold mb-4 small" style="letter-spacing: 1px;">
+                        <span class="material-icons-round align-middle me-1 text-primary">add_a_photo</span>
+                        Evidencia Fotográfica
+                    </h6>
+
+                    <div class="upload-container p-4 mb-5 text-center">
+                        <input type="file" id="actual-btn" name="fotos_extra" multiple accept="image/*">
                         
-                        <div class="col-12">
-                            <div class="p-3 rounded-4" style="background: rgba(233, 30, 99, 0.1); border: 1px solid rgba(233, 30, 99, 0.3);">
-                                <p class="mb-0 small text-white-50 text-justify">
-                                    <strong>CONSENTIMIENTO:</strong> El paciente declara haber sido informado sobre los tratamientos podológicos, riesgos (cortes, abrasiones) y cuidados. Confirma haber entendido las condiciones y objetivos del procedimiento realizado.
-                                </p>
-                            </div>
+                        <label for="actual-btn" class="upload-btn-label mb-3">
+                            <span class="material-icons-round me-2">cloud_upload</span>
+                            Seleccionar Fotos
+                        </label>
+                        
+                        <div id="preview-container" class="mt-2 d-none">
+                             <span class="material-icons-round align-middle text-success">check_circle</span>
+                             <span id="file-chosen">Ningún archivo seleccionado</span>
                         </div>
+                        
+                        <p class="text-white-50 small mb-0 mt-2">Puedes subir múltiples imágenes (JPG, PNG) desde tu dispositivo.</p>
                     </div>
 
-                    <div class="mb-5 text-center">
-                        <label class="form-label d-block text-white mb-3">Firma del Paciente</label>
-                        <div style="background: white; border-radius: 20px; overflow: hidden; display: inline-block; border: 4px solid #333;">
-                            <canvas id="canvas-firma" width="600" height="200" style="touch-action: none; cursor: crosshair;"></canvas>
-                        </div>
-                        <div class="mt-2">
-                            <button type="button" id="btn-limpiar" class="btn btn-outline-light btn-sm rounded-pill px-3">
-                                <span class="material-icons-round align-middle me-1" style="font-size:16px">refresh</span> Borrar Firma
-                            </button>
-                        </div>
-                        <input type="hidden" name="firma_base64" id="firma_base64">
-                    </div>
+                    <hr class="border-secondary my-5 opacity-50">
 
-                    <div class="text-center">
-                        <button type="submit" class="btn btn-primary btn-oval-pro px-5 py-3 shadow-lg" style="background: #e91e63; border: none;">
-                            FINALIZAR ATENCIÓN
+                    <h6 class="text-secondary text-uppercase fw-bold mb-4 small" style="letter-spacing: 1px;">
+                        <span class="material-icons-round align-middle me-1 text-primary">draw</span>
+                        Conformidad del Paciente
+                    </h6>
+                    
+                    <div class="signature-wrapper mb-3 shadow-sm">
+                        <canvas id="signature-pad"></canvas>
+                    </div>
+                    
+                    <input type="hidden" name="firma_base64" id="firma_base64">
+                    
+                    <div class="d-flex justify-content-end mb-5">
+                        <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill px-3" id="clear-signature">
+                            <span class="material-icons-round align-middle" style="font-size: 16px;">delete_sweep</span> Borrar Firma
                         </button>
-                        <a href="{% url 'detalle_paciente' paciente.pk %}" class="btn btn-link text-secondary d-block mt-3">Cancelar</a>
+                    </div>
+
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary btn-oval-pro py-3 shadow-lg" style="background: linear-gradient(45deg, #e91e63, #c2185b); border:none; font-size: 1.1rem;">
+                            <span class="material-icons-round align-middle me-2">save</span> REGISTRAR ATENCIÓN
+                        </button>
                     </div>
                 </form>
             </div>
@@ -108,69 +195,48 @@
     </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
 <script>
-    // --- LÓGICA DE FIRMA ---
-    const canvas = document.getElementById('canvas-firma'); 
-    const ctx = canvas.getContext('2d'); 
-    let dib = false;
+    const actualBtn = document.getElementById('actual-btn');
+    const fileChosen = document.getElementById('file-chosen');
+    const previewContainer = document.getElementById('preview-container');
 
-    ctx.strokeStyle = "#000"; 
-    ctx.lineWidth = 3; 
-    ctx.lineCap = 'round';
-
-    const getPos = (e) => { 
-        const rect = canvas.getBoundingClientRect(); 
-        const scaleX = canvas.width / rect.width; 
-        const scaleY = canvas.height / rect.height;
-        const clientX = e.touches ? e.touches[0].clientX : e.clientX; 
-        const clientY = e.touches ? e.touches[0].clientY : e.clientY; 
-        return { x: (clientX - rect.left) * scaleX, y: (clientY - rect.top) * scaleY }; 
-    };
-
-    const startDraw = (e) => { dib = true; const p = getPos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); if(e.type!='mousedown') e.preventDefault(); };
-    const moveDraw = (e) => { if(!dib) return; const p = getPos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); e.preventDefault(); };
-    const endDraw = () => { dib = false; };
-
-    canvas.addEventListener('mousedown', startDraw); 
-    canvas.addEventListener('mousemove', moveDraw); 
-    window.addEventListener('mouseup', endDraw);
-    canvas.addEventListener('touchstart', startDraw, {passive: false}); 
-    canvas.addEventListener('touchmove', moveDraw, {passive: false}); 
-    canvas.addEventListener('touchend', endDraw);
-
-    document.getElementById('btn-limpiar').onclick = () => ctx.clearRect(0,0,canvas.width,canvas.height);
-    
-    document.getElementById('form-tratamiento').onsubmit = function(e) {
-        document.getElementById('firma_base64').value = canvas.toDataURL();
-    };
-
-    // --- LÓGICA PARA MEJORAR EL DISEÑO DEL INPUT DE FOTOS ---
-    const fotosInput = document.getElementById('fotos_input');
-    const fileCount = document.getElementById('file-count');
-    const dropZone = document.getElementById('drop-zone');
-
-    // Cambiar color al pasar el mouse por encima
-    dropZone.addEventListener('mouseover', () => {
-        dropZone.style.background = 'rgba(255,255,255,0.1)';
-        dropZone.style.borderColor = '#e91e63';
-    });
-    dropZone.addEventListener('mouseout', () => {
-        dropZone.style.background = 'rgba(255,255,255,0.05)';
-        dropZone.style.borderColor = '#555';
-    });
-
-    // Mostrar cuántos archivos se seleccionaron
-    fotosInput.addEventListener('change', function(e) {
-        const count = e.target.files.length;
-        if (count > 0) {
-            fileCount.innerText = `¡Genial! Has seleccionado ${count} foto(s)`;
-            fileCount.classList.remove('text-secondary');
-            fileCount.classList.add('text-primary', 'fw-bold');
-            dropZone.style.borderColor = '#e91e63';
+    actualBtn.addEventListener('change', function(){
+        if (this.files.length > 0) {
+            fileChosen.textContent = this.files.length + " archivo(s) seleccionado(s)";
+            previewContainer.classList.remove('d-none');
         } else {
-            fileCount.innerText = 'Puedes seleccionar varias imágenes a la vez';
-            fileCount.classList.add('text-secondary');
-            fileCount.classList.remove('text-primary', 'fw-bold');
+            fileChosen.textContent = "Ningún archivo seleccionado";
+            previewContainer.classList.add('d-none');
+        }
+    });
+
+    var canvas = document.getElementById('signature-pad');
+    var signaturePad = new SignaturePad(canvas, {
+        backgroundColor: 'rgb(255, 255, 255)',
+        penColor: 'rgb(0, 0, 0)'
+    });
+
+    function resizeCanvas() {
+        var ratio = Math.max(window.devicePixelRatio || 1, 1);
+        var data = signaturePad.toData();
+        canvas.width = canvas.offsetWidth * ratio;
+        canvas.height = canvas.offsetHeight * ratio;
+        canvas.getContext("2d").scale(ratio, ratio);
+        signaturePad.clear(); 
+        signaturePad.fromData(data);
+    }
+
+    window.addEventListener("resize", resizeCanvas);
+    resizeCanvas();
+
+    document.getElementById('clear-signature').addEventListener('click', function () {
+        signaturePad.clear();
+    });
+
+    document.getElementById('tratamientoForm').addEventListener('submit', function (e) {
+        if (!signaturePad.isEmpty()) {
+            document.getElementById('firma_base64').value = signaturePad.toDataURL('image/png');
         }
     });
 </script>
