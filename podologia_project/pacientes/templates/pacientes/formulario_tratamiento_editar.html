@@ -2,6 +2,7 @@
 
 {% block content %}
 <style>
+    /* Estilos del botón de carga de fotos */
     .upload-container {
         background-color: rgba(255, 255, 255, 0.05);
         border: 2px dashed #444;
@@ -39,18 +40,19 @@
         font-style: italic;
     }
     
-    /* ESTILOS PARA LA FIRMA RESPONSIVE */
+    /* ESTILOS PARA LA FIRMA 100% RESPONSIVE (Celular y Tablet) */
     .signature-wrapper {
-        width: 100%;
+        width: 100%; /* Ocupa todo el ancho de la pantalla */
         position: relative;
         background: white;
         border-radius: 15px;
-        overflow: hidden; 
+        overflow: hidden; /* Evita que se salga el borde */
+        border: 1px solid #ccc;
     }
     canvas {
         display: block;
-        width: 100%; /* IMPORTANTE: Ocupa todo el ancho disponible */
-        height: 200px;
+        width: 100%; /* Fuerza al dibujo a adaptarse */
+        height: 200px; /* Altura fija cómoda */
     }
 </style>
 
@@ -78,18 +80,62 @@
                     </h6>
                     
                     <div class="row g-3 mb-4">
-                        {% for proc in "Onicotomía,Debastado de Lámina,Resecado de Hiperqueratosis,Curación,Espiculectomía,Ortonixia,Onicoplastía"|split:"," %}
                         <div class="col-md-6">
-                            <label class="p-3 rounded-4 border border-secondary d-flex align-items-center justify-content-between group-hover" 
-                                   style="background: #252525; cursor: pointer; transition: all 0.2s;">
-                                <span class="text-white mb-0 fw-medium">{{ proc }}</span>
+                            <label class="p-3 rounded-4 border border-secondary d-flex align-items-center justify-content-between group-hover" style="background: #252525; cursor: pointer;">
+                                <span class="text-white mb-0 fw-medium">Onicotomía</span>
                                 <div class="form-check mb-0">
-                                    <input class="form-check-input" type="checkbox" name="tratamientos_check" value="{{ proc }}" 
-                                           style="width: 25px; height: 25px; border-color: #e91e63;">
+                                    <input class="form-check-input" type="checkbox" name="tratamientos_check" value="Onicotomía" style="width: 25px; height: 25px; border-color: #e91e63;">
                                 </div>
                             </label>
                         </div>
-                        {% endfor %}
+                        <div class="col-md-6">
+                            <label class="p-3 rounded-4 border border-secondary d-flex align-items-center justify-content-between group-hover" style="background: #252525; cursor: pointer;">
+                                <span class="text-white mb-0 fw-medium">Debastado de Lámina</span>
+                                <div class="form-check mb-0">
+                                    <input class="form-check-input" type="checkbox" name="tratamientos_check" value="Debastado de Lámina" style="width: 25px; height: 25px; border-color: #e91e63;">
+                                </div>
+                            </label>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="p-3 rounded-4 border border-secondary d-flex align-items-center justify-content-between group-hover" style="background: #252525; cursor: pointer;">
+                                <span class="text-white mb-0 fw-medium">Resecado de Hiperqueratosis</span>
+                                <div class="form-check mb-0">
+                                    <input class="form-check-input" type="checkbox" name="tratamientos_check" value="Resecado de Hiperqueratosis" style="width: 25px; height: 25px; border-color: #e91e63;">
+                                </div>
+                            </label>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="p-3 rounded-4 border border-secondary d-flex align-items-center justify-content-between group-hover" style="background: #252525; cursor: pointer;">
+                                <span class="text-white mb-0 fw-medium">Curación</span>
+                                <div class="form-check mb-0">
+                                    <input class="form-check-input" type="checkbox" name="tratamientos_check" value="Curación" style="width: 25px; height: 25px; border-color: #e91e63;">
+                                </div>
+                            </label>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="p-3 rounded-4 border border-secondary d-flex align-items-center justify-content-between group-hover" style="background: #252525; cursor: pointer;">
+                                <span class="text-white mb-0 fw-medium">Espiculectomía</span>
+                                <div class="form-check mb-0">
+                                    <input class="form-check-input" type="checkbox" name="tratamientos_check" value="Espiculectomía" style="width: 25px; height: 25px; border-color: #e91e63;">
+                                </div>
+                            </label>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="p-3 rounded-4 border border-secondary d-flex align-items-center justify-content-between group-hover" style="background: #252525; cursor: pointer;">
+                                <span class="text-white mb-0 fw-medium">Ortonixia</span>
+                                <div class="form-check mb-0">
+                                    <input class="form-check-input" type="checkbox" name="tratamientos_check" value="Ortonixia" style="width: 25px; height: 25px; border-color: #e91e63;">
+                                </div>
+                            </label>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="p-3 rounded-4 border border-secondary d-flex align-items-center justify-content-between group-hover" style="background: #252525; cursor: pointer;">
+                                <span class="text-white mb-0 fw-medium">Onicoplastía</span>
+                                <div class="form-check mb-0">
+                                    <input class="form-check-input" type="checkbox" name="tratamientos_check" value="Onicoplastía" style="width: 25px; height: 25px; border-color: #e91e63;">
+                                </div>
+                            </label>
+                        </div>
                     </div>
 
                     <div class="mb-4">
@@ -152,7 +198,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
 <script>
-    // --- BOTÓN FOTOS ---
+    // --- LÓGICA DE FOTOS ---
     const actualBtn = document.getElementById('actual-btn');
     const fileChosen = document.getElementById('file-chosen');
     const previewContainer = document.getElementById('preview-container');
@@ -167,35 +213,33 @@
         }
     });
 
-    // --- FIRMA DIGITAL RESPONSIVE ---
+    // --- LÓGICA DE FIRMA RESPONSIVE ---
     var canvas = document.getElementById('signature-pad');
     var signaturePad = new SignaturePad(canvas, {
         backgroundColor: 'rgb(255, 255, 255)',
         penColor: 'rgb(0, 0, 0)'
     });
 
-    // Esta función es la MAGIA que arregla el tamaño en celulares
+    // Función que ajusta el tamaño del canvas al ancho real de la pantalla
     function resizeCanvas() {
         var ratio = Math.max(window.devicePixelRatio || 1, 1);
         
-        // Guardamos la firma si ya existe
+        // Guardar firma actual
         var data = signaturePad.toData();
         
-        // Ajustamos el tamaño interno del canvas al tamaño real de la pantalla
+        // Redimensionar
         canvas.width = canvas.offsetWidth * ratio;
         canvas.height = canvas.offsetHeight * ratio;
         canvas.getContext("2d").scale(ratio, ratio);
         
-        // Restauramos la firma
+        // Restaurar firma y limpiar
         signaturePad.clear(); 
         signaturePad.fromData(data);
     }
 
-    // Escuchar cuando se gira la pantalla o cambia el tamaño
+    // Escuchar cambios de tamaño (girar pantalla)
     window.addEventListener("resize", resizeCanvas);
-    
-    // Ejecutar al inicio para asegurar el tamaño correcto
-    resizeCanvas();
+    resizeCanvas(); // Ejecutar al cargar la página
 
     document.getElementById('clear-signature').addEventListener('click', function () {
         signaturePad.clear();
@@ -207,7 +251,5 @@
         }
     });
 </script>
-
-{% load pacientes_extras %}
 
 {% endblock %}
