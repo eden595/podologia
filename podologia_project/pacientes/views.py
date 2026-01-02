@@ -11,7 +11,6 @@ from .forms import PacienteForm, TratamientoForm
 #              GESTIÓN DE PACIENTES
 # ==========================================
 
-# 1. LISTAR PACIENTES
 class PacienteListView(LoginRequiredMixin, ListView):
     model = Paciente
     template_name = 'pacientes/lista_pacientes.html'
@@ -21,7 +20,6 @@ class PacienteListView(LoginRequiredMixin, ListView):
     def get_queryset(self):
         queryset = super().get_queryset()
         termino = self.request.GET.get('buscar')
-        
         if termino:
             queryset = queryset.filter(
                 Q(nombre__icontains=termino) | 
@@ -36,33 +34,27 @@ class PacienteListView(LoginRequiredMixin, ListView):
         context['termino_busqueda'] = self.request.GET.get('buscar', '')
         return context
 
-# 2. CREAR PACIENTE
 class PacienteCreateView(LoginRequiredMixin, CreateView):
     model = Paciente
     form_class = PacienteForm
     template_name = 'pacientes/formulario_paciente.html'
     success_url = reverse_lazy('lista_pacientes')
 
-# 3. ACTUALIZAR PACIENTE
 class PacienteUpdateView(LoginRequiredMixin, UpdateView):
     model = Paciente
     form_class = PacienteForm
     template_name = 'pacientes/formulario_paciente.html'
     success_url = reverse_lazy('lista_pacientes')
 
-# 4. ELIMINAR PACIENTE
 class PacienteDeleteView(LoginRequiredMixin, DeleteView):
     model = Paciente
     template_name = 'pacientes/eliminar_paciente.html'
     success_url = reverse_lazy('lista_pacientes')
 
-# 5. DETALLE PACIENTE
 @login_required
 def detalle_paciente(request, pk):
     paciente = get_object_or_404(Paciente, pk=pk)
-    # Buscamos historial
     historial = Tratamiento.objects.filter(paciente=paciente).order_by('-fecha')
-    
     try:
         fotos_galeria = paciente.fotos_galeria.all().order_by('-fecha_subida')
     except AttributeError:
@@ -74,12 +66,10 @@ def detalle_paciente(request, pk):
         'fotos_galeria': fotos_galeria
     })
 
-
 # ==========================================
 #           GESTIÓN DE TRATAMIENTOS
 # ==========================================
 
-# 6. CREAR TRATAMIENTO (Función compleja con firma)
 @login_required
 def registrar_tratamiento(request, pk):
     paciente = get_object_or_404(Paciente, pk=pk)
@@ -90,17 +80,21 @@ def registrar_tratamiento(request, pk):
         
         procedimiento_final = ", ".join(seleccionados)
         if otros: 
-            procedimiento_final += f" | Notas: {otros}"
+            if procedimiento_final:
+                procedimiento_final += f" | Notas: {otros}"
+            else:
+                procedimiento_final = f"Notas: {otros}"
 
         # Crear Tratamiento
         nuevo_tratamiento = Tratamiento.objects.create(
             paciente=paciente,
             procedimiento=procedimiento_final,
+            # Guardamos la primera foto como principal si existe
             foto=request.FILES.getlist('fotos_extra')[0] if request.FILES.getlist('fotos_extra') else None, 
             firma=request.POST.get('firma_base64')
         )
 
-        # Guardar fotos EXTRA
+        # Guardar fotos EXTRA (Todas)
         imagenes_extra = request.FILES.getlist('fotos_extra')
         for img in imagenes_extra:
             FotoTratamiento.objects.create(
@@ -112,16 +106,20 @@ def registrar_tratamiento(request, pk):
         
     return render(request, 'pacientes/formulario_tratamiento.html', {'paciente': paciente})
 
-# 7. EDITAR TRATAMIENTO (CON LÓGICA DE FOTOS NUEVA)
 class TratamientoUpdateView(LoginRequiredMixin, UpdateView):
     model = Tratamiento
     form_class = TratamientoForm
     template_name = 'pacientes/formulario_tratamiento_editar.html'
     
     def form_valid(self, form):
-        # 1. Guardar cambios de texto
         response = super().form_valid(form)
         tratamiento = self.object
+
+        # 1. ACTUALIZAR FIRMA (Si se modificó)
+        nueva_firma = self.request.POST.get('firma_base64')
+        if nueva_firma and "data:image" in nueva_firma:
+            tratamiento.firma = nueva_firma
+            tratamiento.save()
 
         # 2. AGREGAR FOTOS NUEVAS
         nuevas_imagenes = self.request.FILES.getlist('nuevas_fotos_extra')
@@ -131,7 +129,6 @@ class TratamientoUpdateView(LoginRequiredMixin, UpdateView):
         # 3. BORRAR FOTOS MARCADAS
         for key in self.request.POST:
             if key.startswith('borrar_foto_'):
-                # El name es borrar_foto_15 -> obtenemos 15
                 foto_id = key.split('_')[2] 
                 try:
                     foto = FotoTratamiento.objects.get(id=foto_id, tratamiento=tratamiento)
@@ -144,7 +141,6 @@ class TratamientoUpdateView(LoginRequiredMixin, UpdateView):
     def get_success_url(self):
         return reverse_lazy('detalle_paciente', kwargs={'pk': self.object.paciente.pk})
 
-# 8. ELIMINAR TRATAMIENTO
 class TratamientoDeleteView(LoginRequiredMixin, DeleteView):
     model = Tratamiento
     template_name = 'pacientes/eliminar_historial.html'
