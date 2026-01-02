@@ -111,6 +111,8 @@ CLOUDINARY_STORAGE = {
     'CLOUD_NAME': 'dezml9ony',
     'API_KEY': '914967166155654',
     'API_SECRET': 'FJkuuyk-qUrzWrqtPTSJKMKwVdE',
+    'API_PROXY': 'http://proxy.server:3128',  # <--- AGREGA ESTA LÍNEA
+    'SECURE': True, # Recomendado para forzar HTTPS
 }
 
 # 3. Definir los Almacenamientos (Esto ya lo tenías bien, déjalo así o pégalo por si acaso)
