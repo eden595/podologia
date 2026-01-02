@@ -1,5 +1,8 @@
 import os
 from pathlib import Path
+import cloudinary
+import cloudinary.uploader
+import cloudinary.api
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -13,6 +16,8 @@ DEBUG = True
 ALLOWED_HOSTS = ['eden2001.pythonanywhere.com', '127.0.0.1', 'localhost']
 # Application definition
 INSTALLED_APPS = [
+    'cloudinary_storage',
+    'cloudinary',
     'pacientes.apps.PacientesConfig', # Recomendado usar la config completa
     'django.contrib.admin',
     'django.contrib.auth',
@@ -93,3 +98,12 @@ LOGOUT_REDIRECT_URL = 'login' # A donde va al salir
 
 DATA_UPLOAD_MAX_MEMORY_SIZE = 52428800 
 FILE_UPLOAD_MAX_MEMORY_SIZE = 52428800
+
+CLOUDINARY_STORAGE = {
+    'CLOUD_NAME': 'eden', 
+    'API_KEY': '914967166155654',
+    'API_SECRET': 'FJkuuyk-qUrzWrqtPTSJKMKwVdE',
+}
+
+# Esto le dice a Django que use Cloudinary para las fotos
+DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
