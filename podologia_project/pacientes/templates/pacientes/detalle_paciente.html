@@ -29,7 +29,7 @@
                     </div>
                     <div class="col-md-3">
                         <small class="text-secondary text-uppercase fw-bold" style="font-size: 0.7rem;">Email</small>
-                        <div class="fw-bold">{{ paciente.email }}</div>
+                        <div class="fw-bold text-break">{{ paciente.email }}</div>
                     </div>
                     <div class="col-md-3">
                         <small class="text-secondary text-uppercase fw-bold" style="font-size: 0.7rem;">Diabetes</small>
@@ -52,10 +52,20 @@
                         </div>
                     </div>
                     
+                    <div class="col-12 mt-3 border-top border-secondary pt-3">
+                        <div class="d-flex align-items-center">
+                            <span class="material-icons-round me-3 text-secondary" style="font-size: 24px; background: #333; padding: 8px; border-radius: 50%;">home</span>
+                            <div>
+                                <small class="text-secondary text-uppercase fw-bold d-block" style="font-size: 0.7rem;">Dirección Particular</small>
+                                <span class="text-white fs-5">{{ paciente.direccion|default:"Dirección no registrada" }}</span>
+                            </div>
+                        </div>
+                    </div>
+
                     {% if paciente.alergias or paciente.observaciones_medicas %}
-                    <div class="col-12 mt-4 border-top border-secondary pt-3">
+                    <div class="col-12 mt-3 border-top border-secondary pt-3">
                         <div class="row">
-                            <div class="col-md-6">
+                            <div class="col-md-6 mb-3 mb-md-0">
                                 <small class="text-secondary text-uppercase fw-bold" style="font-size: 0.7rem;">Alergias</small>
                                 <p class="mb-0 small text-white-50">{{ paciente.alergias|default:"Ninguna" }}</p>
                             </div>
