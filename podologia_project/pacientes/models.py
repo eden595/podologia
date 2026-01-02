@@ -1,6 +1,6 @@
 from django.db import models
 from django.utils import timezone
-from PIL import Image, ImageOps  # <--- AGREGAMOS ImageOps
+from PIL import Image, ImageOps
 from io import BytesIO
 from django.core.files.uploadedfile import InMemoryUploadedFile
 import sys
@@ -8,42 +8,46 @@ import os
 from django.db.models.signals import post_delete 
 from django.dispatch import receiver 
 
-# --- FUNCIÓN DE COMPRESIÓN MEJORADA ---
-def comprimir_imagen(image_field, quality=85): # <--- Calidad 85 (Alta)
-    img = Image.open(image_field)
-    
-    # 1. CORRECCIÓN DE ROTACIÓN (Para que no salgan chuecas las fotos de celular)
-    img = ImageOps.exif_transpose(img)
-    
-    # 2. Convertir a RGB (Si es PNG o tiene fondo transparente)
-    if img.mode != 'RGB':
-        img = img.convert('RGB')
-    
-    # 3. Redimensionar si es gigante (Max 1600px para ver buen detalle)
-    max_width = 1600
-    if img.width > max_width:
-        output_size = (max_width, int(max_width * img.height / img.width))
-        img.thumbnail(output_size)
-    
-    # 4. Guardar comprimida
-    output = BytesIO()
-    img.save(output, format='JPEG', quality=quality, optimize=True)
-    output.seek(0)
-    
-    # 5. Generar el archivo final
-    return InMemoryUploadedFile(
-        output, 
-        'ImageField', 
-        "%s.jpg" % image_field.name.split('.')[0], 
-        'image/jpeg', 
-        output.getbuffer().nbytes, # <--- Forma más exacta de medir el peso
-        None
-    )
+# --- FUNCIÓN DE COMPRESIÓN MEJORADA (V2: Más Nitidez) ---
+def comprimir_imagen(image_field, quality=90): # <--- Calidad subida a 90
+    try:
+        img = Image.open(image_field)
+        
+        # 1. CORRECCIÓN DE ROTACIÓN
+        img = ImageOps.exif_transpose(img)
+        
+        # 2. Convertir a RGB
+        if img.mode != 'RGB':
+            img = img.convert('RGB')
+        
+        # 3. Redimensionar (Subido a 1920px para Full HD y usando filtro LANCZOS para nitidez)
+        max_width = 1920 
+        if img.width > max_width:
+            output_size = (max_width, int(max_width * img.height / img.width))
+            # Image.Resampling.LANCZOS es clave para que no se vea borrosa al reducir
+            img.thumbnail(output_size, Image.Resampling.LANCZOS)
+        
+        # 4. Guardar comprimida
+        output = BytesIO()
+        # optimize=True es vital: busca la mejor forma de comprimir sin perder calidad visual
+        img.save(output, format='JPEG', quality=quality, optimize=True)
+        output.seek(0)
+        
+        return InMemoryUploadedFile( 
+            output, 
+            'ImageField', 
+            "%s.jpg" % image_field.name.split('.')[0], 
+            'image/jpeg', 
+            output.getbuffer().nbytes,
+            None
+        )
+    except Exception as e:
+        print(f"Error al comprimir imagen: {e}")
+        return image_field # Si falla, devuelve la original para no perder datos
 
 # ==========================================
 #                 MODELOS
 # ==========================================
-# (El resto de tus modelos sigue IGUAL, cópialos tal cual los tenías)
 
 class Paciente(models.Model):
     nombre = models.CharField(max_length=100)
@@ -108,17 +112,15 @@ class FotoTratamiento(models.Model):
 @receiver(post_delete, sender=Tratamiento)
 def borrar_foto_tratamiento(sender, instance, **kwargs):
     if instance.foto:
-        if os.path.isfile(instance.foto.path):
-            os.remove(instance.foto.path)
+        # Esto funciona con Cloudinary y local automáticamente
+        instance.foto.delete(save=False)
 
 @receiver(post_delete, sender=FotoGaleria)
 def borrar_foto_galeria(sender, instance, **kwargs):
     if instance.imagen:
-        if os.path.isfile(instance.imagen.path):
-            os.remove(instance.imagen.path)
+        instance.imagen.delete(save=False)
 
 @receiver(post_delete, sender=FotoTratamiento)
 def borrar_foto_extra(sender, instance, **kwargs):
     if instance.imagen:
-        if os.path.isfile(instance.imagen.path):
-            os.remove(instance.imagen.path)
+        instance.imagen.delete(save=False)
