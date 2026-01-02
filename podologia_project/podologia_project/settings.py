@@ -100,10 +100,18 @@ DATA_UPLOAD_MAX_MEMORY_SIZE = 52428800
 FILE_UPLOAD_MAX_MEMORY_SIZE = 52428800
 
 CLOUDINARY_STORAGE = {
-    'CLOUD_NAME': 'eden', 
+    'CLOUD_NAME': 'dezml9ony', 
     'API_KEY': '914967166155654',
     'API_SECRET': 'FJkuuyk-qUrzWrqtPTSJKMKwVdE',
 }
 
 # Esto le dice a Django que use Cloudinary para las fotos
-DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+# --- EN LUGAR DE LA LÍNEA VIEJA, PON ESTO: ---
+STORAGES = {
+    "default": {
+        "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+    },
+}
