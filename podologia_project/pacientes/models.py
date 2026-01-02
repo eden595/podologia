@@ -5,6 +5,7 @@ class Paciente(models.Model):
     rut = models.CharField(max_length=15, unique=True)
     telefono = models.CharField(max_length=20, blank=True, null=True)
     email = models.EmailField()
+    direccion = models.CharField(max_length=200, blank=True, null=True) # ⬅️ AGREGA ESTA LÍNEA
     # Ficha Técnica
     diabetes = models.BooleanField(default=False)
     hipertension = models.BooleanField(default=False)
