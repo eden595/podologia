@@ -9,7 +9,6 @@ class PacienteForm(forms.ModelForm):
             'nombre': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nombre completo'}),
             'rut': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ej: [REDACTED_DB_PASSWORD]-9'}),
             'telefono': forms.TextInput(attrs={'class': 'form-control'}),
-            'email': forms.EmailInput(attrs={'class': 'form-control'}),
             'direccion': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Calle, Número, Comuna'}),
             'alergias': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
             'observaciones_medicas': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),

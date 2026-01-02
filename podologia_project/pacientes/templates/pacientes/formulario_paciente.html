@@ -38,15 +38,11 @@
                             <input type="text" name="rut" class="form-control" placeholder="12.345.678-9" 
                                    value="{{ form.instance.rut|default_if_none:'' }}" required>
                         </div>
-                        <div class="col-md-6">
+                        
+                        <div class="col-md-12">
                             <label class="form-label text-white ms-3 small">Teléfono</label>
                             <input type="tel" name="telefono" class="form-control" placeholder="+56 9..."
                                    value="{{ form.instance.telefono|default_if_none:'' }}">
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label text-white ms-3 small">Correo Electrónico</label>
-                            <input type="email" name="email" class="form-control" placeholder="nombre@correo.com" 
-                                   value="{{ form.instance.email|default_if_none:'' }}" required>
                         </div>
 
                         <div class="col-12">

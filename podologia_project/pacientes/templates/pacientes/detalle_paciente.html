@@ -23,15 +23,12 @@
         <div class="card card-pro mb-5 border-0 shadow-lg">
             <div class="card-body p-4">
                 <div class="row g-4 text-white">
-                    <div class="col-md-3">
+                    <div class="col-md-4">
                         <small class="text-secondary text-uppercase fw-bold" style="font-size: 0.7rem;">Teléfono</small>
                         <div class="fw-bold">{{ paciente.telefono|default:"--" }}</div>
                     </div>
-                    <div class="col-md-3">
-                        <small class="text-secondary text-uppercase fw-bold" style="font-size: 0.7rem;">Email</small>
-                        <div class="fw-bold text-break">{{ paciente.email }}</div>
-                    </div>
-                    <div class="col-md-3">
+                    
+                    <div class="col-md-4">
                         <small class="text-secondary text-uppercase fw-bold" style="font-size: 0.7rem;">Diabetes</small>
                         <div>
                             {% if paciente.diabetes %}
@@ -41,7 +38,7 @@
                             {% endif %}
                         </div>
                     </div>
-                    <div class="col-md-3">
+                    <div class="col-md-4">
                         <small class="text-secondary text-uppercase fw-bold" style="font-size: 0.7rem;">Hipertensión</small>
                         <div>
                             {% if paciente.hipertension %}
@@ -143,7 +140,7 @@
                     <div class="col-md-6 offset-md-6 text-end">
                         <small class="text-secondary d-block mb-2">Conformidad del Paciente:</small>
                         {% if item.firma %}
-                            <div class="d-inline-block bg-white rounded-3 p-2 shadow-sm" style="transform: rotate(-2deg);">
+                            <div class="d-inline-block bg-white rounded-3 p-2 shadow-sm">
                                 <img src="{{ item.firma }}" style="height: 60px; max-width: 200px; filter: contrast(1.2);">
                             </div>
                         {% else %}
