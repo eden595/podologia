@@ -114,7 +114,7 @@ CLOUDINARY_STORAGE = {
     'API_PROXY': 'http://proxy.server:3128',  # <--- AGREGA ESTA LÍNEA
     'SECURE': True, # Recomendado para forzar HTTPS
 }
-
+os.environ['CLOUDINARY_URL'] = '[REDACTED_CLOUDINARY_URL]'
 # 3. Definir los Almacenamientos (Esto ya lo tenías bien, déjalo así o pégalo por si acaso)
 STORAGES = {
     "default": {
