@@ -47,6 +47,13 @@
         width: 100%;
         height: 200px;
     }
+    /* Estilo nuevo para la caja de consentimiento */
+    .consent-box {
+        background-color: rgba(255, 235, 238, 0.95); /* Un tono rosado muy suave/blanco */
+        color: #333;
+        border-left: 5px solid #e91e63;
+        border-radius: 10px;
+    }
 </style>
 
 <div class="row justify-content-center">
@@ -171,7 +178,18 @@
                         <span class="material-icons-round align-middle me-1 text-primary">draw</span>
                         Conformidad del Paciente
                     </h6>
-                    
+
+                    <div class="consent-box p-3 mb-3">
+                        <h6 class="fw-bold mb-2" style="color: #c2185b;">Consentimiento informado:</h6>
+                        <p class="mb-0 small" style="line-height: 1.5;">
+                            El usuario deja constancia, que se le explica sobre los tratamientos podológicos, y que
+                            no están exentos de riesgos, como lesiones cortantes, abrasivas o irritantes.
+                            Manifiesta que el profesional de salud le entrega está información y le da la
+                            oportunidad de preguntar y resolver dudas.
+                            Además, que ha entendido las condiciones, objetivos y cuidados de los
+                            procedimientos realizados.
+                        </p>
+                    </div>
                     <div class="signature-wrapper mb-3 shadow-sm">
                         <canvas id="signature-pad"></canvas>
                     </div>
