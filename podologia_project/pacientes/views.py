@@ -21,19 +21,30 @@ class PacienteListView(LoginRequiredMixin, ListView):
     def get_queryset(self):
         queryset = super().get_queryset()
         termino = self.request.GET.get('buscar')
+        
         if termino:
-            queryset = queryset.filter(
-                Q(nombre__icontains=termino) | 
-                Q(rut__icontains=termino)
-            ).order_by('-id')
+            # 1. LIMPIEZA: Quitamos espacios vacíos al inicio y final (Vital para celular)
+            termino_limpio = termino.strip()
+            
+            # 2. SEPARACIÓN: Dividimos lo que escribió en palabras
+            # Ejemplo: "Leopoldo Fuentes " se convierte en ["Leopoldo", "Fuentes"]
+            palabras = termino_limpio.split()
+            
+            # 3. CONSTRUCCIÓN DE LA BÚSQUEDA INTELIGENTE
+            # Empezamos con una consulta vacía
+            query = Q()
+            
+            for palabra in palabras:
+                # Agregamos la condición: Que el nombre O el rut contengan ESTA palabra
+                # El operador & (AND) obliga a que se cumplan todas las palabras
+                query &= (Q(nombre__icontains=palabra) | Q(rut__icontains=palabra))
+            
+            # 4. FILTRADO FINAL
+            queryset = queryset.filter(query).order_by('-id')
         else:
             queryset = queryset.order_by('-id')
+            
         return queryset
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['termino_busqueda'] = self.request.GET.get('buscar', '')
-        return context
 
 class PacienteCreateView(LoginRequiredMixin, CreateView):
     model = Paciente
