@@ -42,9 +42,9 @@
     <div class="col-lg-4">
         <form method="GET">
             <div class="input-group shadow-sm">
-                <span class="input-group-text border-secondary text-white" style="border-radius: 50px 0 0 50px !important; border-right: none !important; background-color: #2b2b2b;">
+                <button type="submit" class="input-group-text border-secondary text-white" style="border-radius: 50px 0 0 50px !important; border-right: none !important; background-color: #2b2b2b; cursor: pointer; border: 1px solid #6c757d;">
                     <span class="material-icons-round">search</span>
-                </span>
+                </button>
                 <input type="text" name="buscar" class="form-control border-secondary border-start-0 text-white" placeholder="Buscar por nombre o RUT..." value="{{ request.GET.buscar|default:'' }}" style="border-radius: 0 50px 50px 0 !important; background-color: #2b2b2b;">
             </div>
         </form>
