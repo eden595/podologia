@@ -13,3 +13,8 @@ ENV/
 # VS Code y otros
 .vscode/
 .DS_Store
+
+# Variables de entorno
+.env
+.env.*
+!.env.example

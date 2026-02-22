@@ -1,44 +1,33 @@
 {% extends "pacientes/base.html" %}
 
-{% block content %}
-<div class="row justify-content-center" style="min-height: 60vh; align-items: center;">
-    <div class="col-md-6 col-lg-4">
-        <div class="card card-pro shadow-lg border-0">
-            <div class="card-header text-center pt-4 pb-0" style="background: transparent; border: none;">
-                <h3 class="fw-bold mb-0" style="color: #e91e63;">Iniciar Sesión</h3>
-                <p class="text-secondary small">Sistema de Podología</p>
-            </div>
-            <div class="card-body p-5">
-                <form method="post">
-                    {% csrf_token %}
-                    
-                    {% if form.errors %}
-                        <div class="alert alert-danger text-center rounded-pill py-2 mb-4 small">
-                            Usuario o contraseña incorrectos
-                        </div>
-                    {% endif %}
+{% block auth_content %}
+<div class="auth-card">
+    <h1 class="auth-title">Ingreso Clinica</h1>
+    <p class="auth-subtitle">Accede para gestionar pacientes y atenciones podologicas.</p>
 
-                    <div class="mb-4">
-                        <label class="form-label text-white ms-3">Usuario</label>
-                        <input type="text" name="username" class="form-control input-dark-oval" required autofocus>
-                    </div>
+    <form method="post">
+        {% csrf_token %}
 
-                    <div class="mb-5">
-                        <label class="form-label text-white ms-3">Contraseña</label>
-                        <input type="password" name="password" class="form-control input-dark-oval" required>
-                    </div>
+        {% if form.errors %}
+            <div class="alert" style="margin-bottom: 14px;">Usuario o contrasena incorrectos.</div>
+        {% endif %}
 
-                    <div class="d-grid">
-                        <button type="submit" class="btn btn-primary btn-oval-pro py-2 shadow-lg" style="background: #e91e63;">
-                            INGRESAR
-                        </button>
-                    </div>
-                </form>
-            </div>
-            <div class="card-footer text-center pb-4 border-0 bg-transparent">
-                <small class="text-secondary">© Paola Baeza Podología</small>
-            </div>
+        <div class="field" style="margin-bottom: 12px;">
+            <label for="id_username">Usuario</label>
+            <input id="id_username" type="text" name="username" class="input" required autofocus>
         </div>
-    </div>
+
+        <div class="field" style="margin-bottom: 18px;">
+            <label for="id_password">Contrasena</label>
+            <input id="id_password" type="password" name="password" class="input" required>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-wide">
+            <span class="material-symbols-outlined">login</span>
+            Ingresar
+        </button>
+    </form>
+
+    <p class="footer-note">Sistema de gestion podologica</p>
 </div>
 {% endblock %}

@@ -1,0 +1,517 @@
+﻿{% extends "pacientes/base.html" %}
+
+{% block page_title %}Administrar Pacientes{% endblock %}
+{% block page_subtitle %}Busqueda, gestion de ficha y seguimiento de tratamientos{% endblock %}
+
+{% block topbar_actions %}
+<a href="{% url 'crear_paciente' %}" class="btn btn-primary">
+    <span class="material-icons-round me-1">person_add</span>
+    Nuevo paciente
+</a>
+{% endblock %}
+
+{% block content %}
+<style>
+    .stats-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 14px;
+        margin-bottom: 18px;
+    }
+
+    .panel-shell {
+        background: linear-gradient(160deg, rgba(24, 34, 68, 0.95), rgba(15, 21, 40, 0.95));
+        border: 1px solid rgba(112, 130, 255, 0.2);
+        border-radius: 22px;
+        box-shadow: var(--shadow);
+        overflow: hidden;
+    }
+
+    .panel-head {
+        padding: 18px 20px;
+        border-bottom: 1px solid rgba(112, 130, 255, 0.2);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+
+    .panel-sub {
+        color: var(--muted);
+        font-size: 13px;
+        margin-top: 4px;
+    }
+
+    .toolbar {
+        padding: 14px 20px;
+        border-bottom: 1px solid rgba(112, 130, 255, 0.16);
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        flex-wrap: wrap;
+        background: rgba(12, 18, 36, 0.45);
+    }
+
+    .toolbar-left {
+        display: flex;
+        align-items: end;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    .toolbar-field {
+        display: grid;
+        gap: 6px;
+    }
+
+    .toolbar-field label {
+        color: var(--muted);
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+    }
+
+    .toolbar-select {
+        min-width: 110px;
+        border-radius: 12px;
+        border: 1px solid rgba(112, 130, 255, 0.28);
+        background: rgba(10, 16, 34, 0.88);
+        color: var(--text);
+        padding: 8px 10px;
+    }
+
+    .toolbar-right {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-left: auto;
+    }
+
+    .toolbar-search {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        min-width: min(420px, 100%);
+        background: linear-gradient(145deg, rgba(8, 14, 30, 0.96), rgba(11, 20, 42, 0.96));
+        border: 1px solid rgba(112, 130, 255, 0.28);
+        border-radius: 999px;
+        padding: 5px 7px 5px 10px;
+        box-shadow: inset 0 0 0 1px rgba(90, 211, 255, 0.06);
+    }
+
+    .toolbar-search:focus-within {
+        border-color: rgba(90, 211, 255, 0.55);
+        box-shadow: 0 0 0 3px rgba(90, 211, 255, 0.12);
+    }
+
+    .search-mark {
+        color: #94dfff;
+        opacity: 0.95;
+    }
+
+    .toolbar-search input {
+        width: 100%;
+        border: 0;
+        background: transparent;
+        color: var(--text);
+        outline: none;
+        padding: 6px 0;
+        font-size: 15px;
+    }
+
+    .toolbar-search input::placeholder {
+        color: rgba(182, 197, 233, 0.72) !important;
+    }
+
+    .btn-search {
+        border: 0;
+        border-radius: 999px;
+        background: linear-gradient(135deg, #5ad3ff, #6f7cff);
+        color: #091020;
+        font-weight: 700;
+        font-size: 12px;
+        padding: 9px 14px;
+        min-width: 82px;
+    }
+
+    .btn-clear {
+        border-radius: 10px;
+        border-color: rgba(112, 130, 255, 0.35);
+        color: #dce8ff;
+        background: rgba(14, 22, 44, 0.65);
+    }
+
+    .btn-clear:hover {
+        border-color: rgba(90, 211, 255, 0.6);
+        color: #ffffff;
+    }
+
+    .table-wrap {
+        overflow-x: auto;
+    }
+
+    .admin-table {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 1080px;
+    }
+
+    .admin-table thead th {
+        padding: 14px 16px;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--muted);
+        text-align: left;
+        border-bottom: 1px solid rgba(112, 130, 255, 0.2);
+        background: rgba(12, 18, 36, 0.55);
+    }
+
+    .admin-table tbody td {
+        padding: 14px 16px;
+        border-bottom: 1px solid rgba(112, 130, 255, 0.14);
+        vertical-align: middle;
+    }
+
+    .admin-table tbody tr:hover {
+        background: rgba(90, 211, 255, 0.06);
+    }
+
+    .patient-cell {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .patient-avatar {
+        width: 38px;
+        height: 38px;
+        border-radius: 12px;
+        background: linear-gradient(145deg, rgba(90, 211, 255, 0.7), rgba(111, 124, 255, 0.8));
+        color: #0b0f1a;
+        display: grid;
+        place-items: center;
+        font-size: 18px;
+    }
+
+    .patient-name {
+        font-weight: 600;
+    }
+
+    .patient-sub {
+        color: var(--muted);
+        font-size: 12px;
+        margin-top: 2px;
+    }
+
+    .chip-soft {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 5px 10px;
+        border-radius: 999px;
+        font-size: 12px;
+        border: 1px solid rgba(112, 130, 255, 0.24);
+        background: rgba(20, 28, 51, 0.78);
+        color: var(--text);
+    }
+
+    .chip-soft.warn {
+        border-color: rgba(255, 193, 7, 0.4);
+        background: rgba(255, 193, 7, 0.12);
+    }
+
+    .chip-soft.danger {
+        border-color: rgba(220, 53, 69, 0.4);
+        background: rgba(220, 53, 69, 0.12);
+    }
+
+    .status-pill {
+        display: inline-flex;
+        align-items: center;
+        padding: 5px 10px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 600;
+        border: 1px solid rgba(112, 130, 255, 0.24);
+        background: rgba(20, 28, 51, 0.78);
+        margin-right: 6px;
+        margin-bottom: 4px;
+    }
+
+    .status-pill.ok {
+        border-color: rgba(40, 167, 69, 0.4);
+        background: rgba(40, 167, 69, 0.14);
+    }
+
+    .status-pill.warn {
+        border-color: rgba(255, 193, 7, 0.4);
+        background: rgba(255, 193, 7, 0.14);
+    }
+
+    .actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+    .btn-action {
+        border-radius: 10px;
+        padding: 8px 12px;
+        font-size: 12px;
+        font-weight: 600;
+        border: 1px solid rgba(112, 130, 255, 0.25);
+    }
+
+    .btn-edit {
+        background: linear-gradient(135deg, #4fb7ff, #348be0);
+        color: #091020;
+        border: none;
+    }
+
+    .btn-treatment {
+        background: linear-gradient(135deg, #ffd166, #f5a623);
+        color: #1d1b0f;
+        border: none;
+    }
+
+    .btn-view {
+        background: rgba(20, 28, 51, 0.8);
+        color: var(--text);
+    }
+
+    .panel-footer {
+        padding: 14px 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+        border-top: 1px solid rgba(112, 130, 255, 0.16);
+    }
+
+    @media (max-width: 900px) {
+        .toolbar-search {
+            min-width: 100%;
+        }
+
+        .toolbar-right {
+            width: 100%;
+            margin-left: 0;
+        }
+
+        .actions {
+            justify-content: flex-start;
+        }
+    }
+</style>
+
+<div class="stats-row">
+    <div class="glass-card stat-card">
+        <div class="stat-label">Total pacientes</div>
+        <h3>{{ total_pacientes }}</h3>
+    </div>
+    <div class="glass-card stat-card">
+        <div class="stat-label">Sin historial</div>
+        <h3>{{ pacientes_sin_historial }}</h3>
+    </div>
+</div>
+
+<section class="panel-shell">
+    <div class="panel-head">
+        <div>
+            <h4 class="mb-0">Panel de Pacientes</h4>
+            <div class="panel-sub">Listado administrativo con acciones clinicas directas</div>
+        </div>
+    </div>
+
+    <div class="toolbar">
+        <form method="GET" class="toolbar-left">
+            <div class="toolbar-field">
+                <label for="perPage">Mostrar</label>
+                <select name="per_page" id="perPage" class="toolbar-select" data-autosubmit="true">
+                    <option value="10" {% if per_page_actual == '10' %}selected{% endif %}>10</option>
+                    <option value="20" {% if per_page_actual == '20' %}selected{% endif %}>20</option>
+                    <option value="50" {% if per_page_actual == '50' %}selected{% endif %}>50</option>
+                </select>
+            </div>
+
+            <div class="toolbar-field">
+                <label for="estadoFiltro">Estado</label>
+                <select name="estado" id="estadoFiltro" class="toolbar-select" data-autosubmit="true">
+                    <option value="" {% if not estado_actual %}selected{% endif %}>Todos</option>
+                    <option value="con_historial" {% if estado_actual == 'con_historial' %}selected{% endif %}>Con historial</option>
+                    <option value="sin_historial" {% if estado_actual == 'sin_historial' %}selected{% endif %}>Sin historial</option>
+                </select>
+            </div>
+
+            {% if buscar_actual %}
+                <input type="hidden" name="buscar" value="{{ buscar_actual }}">
+            {% endif %}
+        </form>
+
+        <div class="toolbar-right">
+            <form method="GET" class="toolbar-search">
+                <span class="material-icons-round search-mark">search</span>
+                <input type="text" name="buscar" value="{{ buscar_actual }}" placeholder="Buscar por nombre o RUT">
+                {% if estado_actual %}
+                    <input type="hidden" name="estado" value="{{ estado_actual }}">
+                {% endif %}
+                <input type="hidden" name="per_page" value="{{ per_page_actual }}">
+                <button type="submit" class="btn-search">Buscar</button>
+            </form>
+
+            {% if buscar_actual or estado_actual or per_page_actual != '10' %}
+                <a href="{% url 'administrar_pacientes' %}" class="btn btn-outline-light btn-sm btn-clear">
+                    Limpiar filtros
+                </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="table-wrap">
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>RUT</th>
+                    <th>Paciente</th>
+                    <th>Telefono</th>
+                    <th>Condiciones</th>
+                    <th>Ultima atencion</th>
+                    <th>Estado</th>
+                    <th style="text-align: right;">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in pacientes %}
+                <tr>
+                    <td><span class="chip-soft">{{ p.rut|default:"Sin RUT" }}</span></td>
+                    <td>
+                        <div class="patient-cell">
+                            <div class="patient-avatar">
+                                <span class="material-icons-round">person</span>
+                            </div>
+                            <div>
+                                <div class="patient-name">{{ p.nombre }}</div>
+                                <div class="patient-sub">{{ p.direccion|default:"Direccion no registrada" }}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="patient-name">{{ p.telefono|default:"Sin telefono" }}</div>
+                    </td>
+                    <td>
+                        {% if p.diabetes %}
+                            <span class="chip-soft danger">Diabetes</span>
+                        {% endif %}
+                        {% if p.hipertension %}
+                            <span class="chip-soft warn">Hipertension</span>
+                        {% endif %}
+                        {% if not p.diabetes and not p.hipertension %}
+                            <span class="chip-soft">Sin riesgo declarado</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% with ultima=p.tratamientos_ordenados.0 %}
+                            {% if ultima %}
+                                <div class="patient-name">{{ ultima.fecha|date:"d/m/Y H:i" }}</div>
+                                <div class="patient-sub">{{ p.tratamientos_ordenados|length }} atencion(es)</div>
+                            {% else %}
+                                <span class="chip-soft">Sin atenciones</span>
+                            {% endif %}
+                        {% endwith %}
+                    </td>
+                    <td>
+                        {% if p.tratamientos_ordenados %}
+                            <span class="status-pill ok">En tratamiento</span>
+                        {% else %}
+                            <span class="status-pill">Ficha nueva</span>
+                        {% endif %}
+                        {% if p.diabetes or p.hipertension %}
+                            <span class="status-pill warn">Seguimiento</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="actions">
+                            <a href="{% url 'editar_paciente' p.pk %}" class="btn btn-action btn-edit">Editar ficha</a>
+                            <a href="{% url 'registrar_tratamiento' p.pk %}" class="btn btn-action btn-treatment">Tratamiento</a>
+                            <a href="{% url 'detalle_paciente' p.pk %}" class="btn btn-action btn-view">Ver ficha</a>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="text-center py-5 text-secondary">
+                        No se encontraron pacientes para ese criterio de busqueda.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="panel-footer">
+        {% if page_obj %}
+            <div class="text-secondary small">
+                Mostrando {{ page_obj.start_index }} a {{ page_obj.end_index }} de {{ page_obj.paginator.count }} registros
+            </div>
+        {% else %}
+            <div class="text-secondary small">Pacientes registrados: {{ pacientes|length }}</div>
+        {% endif %}
+
+        {% if is_paginated %}
+        <nav aria-label="Navegacion de paginas">
+            <ul class="pagination m-0">
+                {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if buscar_actual %}&buscar={{ buscar_actual|urlencode }}{% endif %}{% if estado_actual %}&estado={{ estado_actual|urlencode }}{% endif %}{% if per_page_actual %}&per_page={{ per_page_actual }}{% endif %}">
+                            <span class="material-icons-round" style="font-size: 18px;">arrow_back_ios</span>
+                        </a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">
+                            <span class="material-icons-round" style="font-size: 18px;">arrow_back_ios</span>
+                        </span>
+                    </li>
+                {% endif %}
+
+                <li class="page-item disabled">
+                    <span class="page-link fw-bold">Pagina {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span>
+                </li>
+
+                {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if buscar_actual %}&buscar={{ buscar_actual|urlencode }}{% endif %}{% if estado_actual %}&estado={{ estado_actual|urlencode }}{% endif %}{% if per_page_actual %}&per_page={{ per_page_actual }}{% endif %}">
+                            <span class="material-icons-round" style="font-size: 18px;">arrow_forward_ios</span>
+                        </a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">
+                            <span class="material-icons-round" style="font-size: 18px;">arrow_forward_ios</span>
+                        </span>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+    </div>
+</section>
+
+<script>
+    (function () {
+        var autoSubmitFields = document.querySelectorAll('[data-autosubmit="true"]');
+        autoSubmitFields.forEach(function (field) {
+            field.addEventListener('change', function () {
+                if (field.form) {
+                    field.form.submit();
+                }
+            });
+        });
+    })();
+</script>
+{% endblock %}

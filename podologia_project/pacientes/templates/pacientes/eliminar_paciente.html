@@ -1,21 +1,40 @@
-{% extends 'pacientes/base.html' %}
+﻿{% extends "pacientes/base.html" %}
+
+{% block page_title %}Eliminar Paciente{% endblock %}
+
+{% block topbar_search %}{% endblock %}
+
+{% block topbar_actions %}
+<a href="{% url 'lista_pacientes' %}" class="btn btn-outline">
+    <span class="material-symbols-outlined">arrow_back</span>
+    Volver
+</a>
+{% endblock %}
 
 {% block content %}
-<div class="container mt-5">
-    <div class="card border-danger">
-        <div class="card-header bg-danger text-white">
-            Confirmar Eliminación
-        </div>
-        <div class="card-body">
-            <h5 class="card-title">¿Estás seguro de que deseas eliminar a {{ object.nombre }}?</h5>
-            <p class="card-text">Esta acción no se puede deshacer y se perderá su historial clínico.</p>
-            
-            <form method="post">
-                {% csrf_token %}
-                <button type="submit" class="btn btn-danger">Sí, eliminar</button>
-                <a href="{% url 'lista_pacientes' %}" class="btn btn-secondary">Cancelar</a>
-            </form>
+<section class="panel confirm-card">
+    <div class="panel-head">
+        <div>
+            <h2 class="panel-title">Confirmar Eliminacion</h2>
+            <p class="panel-subtitle">Esta accion es irreversible</p>
         </div>
     </div>
-</div>
+
+    <div class="confirm-body">
+        <p style="font-size: 1.1rem; font-weight: 700; margin-bottom: 10px;">Deseas eliminar a {{ object.nombre }}?</p>
+        <p style="color: var(--text-muted); line-height: 1.6; margin-bottom: 18px;">
+            Se borrara su ficha y todo el historial clinico asociado, incluyendo tratamientos, fotos y firmas.
+        </p>
+
+        <form method="post" class="inline-actions" style="justify-content: flex-end;">
+            {% csrf_token %}
+            <a href="{% url 'lista_pacientes' %}" class="btn btn-outline">Cancelar</a>
+            <button type="submit" class="btn btn-danger">
+                <span class="material-symbols-outlined">delete</span>
+                Si, eliminar
+            </button>
+        </form>
+    </div>
+</section>
 {% endblock %}
+

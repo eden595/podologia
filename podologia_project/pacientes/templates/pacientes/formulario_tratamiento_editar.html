@@ -1,182 +1,201 @@
-{% extends 'pacientes/base.html' %}
+﻿{% extends "pacientes/base.html" %}
+
+{% block page_title %}Editar Tratamiento{% endblock %}
+
+{% block topbar_search %}{% endblock %}
+
+{% block topbar_actions %}
+<a href="{% url 'detalle_paciente' object.paciente.pk %}" class="btn btn-outline">
+    <span class="material-symbols-outlined">arrow_back</span>
+    Volver a ficha
+</a>
+{% endblock %}
 
 {% block content %}
-<style>
-    .signature-wrapper {
-        width: 100%;
-        position: relative;
-        background: white;
-        border-radius: 15px;
-        overflow: hidden;
-        border: 1px solid #ccc;
-    }
-    canvas {
-        display: block;
-        width: 100%;
-        height: 200px;
-    }
-    .upload-container {
-        background-color: rgba(255, 255, 255, 0.05);
-        border: 2px dashed #444;
-        border-radius: 20px;
-    }
-    .upload-container:hover {
-        border-color: #e91e63;
-        background-color: rgba(233, 30, 99, 0.05);
-    }
-    .upload-btn-label {
-        background: linear-gradient(45deg, #e91e63, #c2185b);
-        color: white;
-        padding: 10px 25px;
-        border-radius: 50px;
-        cursor: pointer;
-    }
-    #actual-btn { display: none; }
-</style>
+<section class="page-header">
+    <h1 class="page-title">Editar Tratamiento</h1>
+    <p class="page-description">Paciente: <strong>{{ object.paciente.nombre }}</strong></p>
+</section>
 
-<div class="row justify-content-center">
-    <div class="col-md-8">
-        <div class="card card-pro shadow border-0">
-            
-            <div class="card-header bg-transparent border-0 pt-4 pb-0">
-                <div class="d-flex align-items-center mb-2">
-                    <a href="{% url 'detalle_paciente' object.paciente.pk %}" class="text-secondary text-decoration-none me-3" title="Volver a la ficha">
-                        <span class="material-icons-round fs-2" style="color: #e91e63;">arrow_back</span>
-                    </a>
-                    <div>
-                        <h3 class="text-white fw-bold mb-0">Editar Tratamiento</h3>
-                        <p class="text-secondary mb-0 small">Paciente: <strong class="text-primary">{{ object.paciente.nombre }}</strong></p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="card-body p-4">
-                <form method="post" enctype="multipart/form-data" id="editForm">
-                    {% csrf_token %}
-                    
-                    <div class="mb-4">
-                        <label class="text-white form-label small ms-2">Fecha del Procedimiento</label>
-                        <input type="datetime-local" name="fecha" class="form-control" style="border-radius: 20px;"
-                               value="{{ object.fecha|date:'Y-m-d\TH:i' }}">
-                    </div>
-
-                    <div class="mb-4">
-                        <label class="text-white form-label small ms-2">Descripción del Procedimiento</label>
-                        {{ form.procedimiento }}
-                    </div>
-
-                    <hr class="border-secondary my-4">
-
-                    <h6 class="text-white mb-3">
-                        <span class="material-icons-round align-middle me-1 text-danger">delete_sweep</span>
-                        Eliminar Fotos Existentes
-                    </h6>
-                    
-                    {% if object.fotos_tratamiento.all %}
-                        <p class="text-secondary small mb-3">Marca la casilla roja en las fotos que quieras borrar:</p>
-                        <div class="row g-3 mb-4">
-                            {% for foto in object.fotos_tratamiento.all %}
-                            <div class="col-4 col-sm-3">
-                                <div class="position-relative">
-                                    <img src="{{ foto.imagen.url }}" class="rounded shadow-sm w-100" style="aspect-ratio: 1/1; object-fit: cover; border: 1px solid #444;">
-                                    <div class="form-check position-absolute top-0 end-0 m-1">
-                                        <input class="form-check-input bg-danger border-0 shadow" type="checkbox" name="borrar_foto_{{ foto.id }}" style="cursor: pointer; width: 22px; height: 22px;">
-                                    </div>
-                                </div>
-                            </div>
-                            {% endfor %}
-                        </div>
-                    {% else %}
-                        <p class="text-white-50 small fst-italic mb-4">No hay fotos adicionales en este registro.</p>
-                    {% endif %}
-
-                    <hr class="border-secondary my-4">
-
-                    <h6 class="text-white mb-3">
-                        <span class="material-icons-round align-middle me-1 text-success">add_photo_alternate</span>
-                        Agregar Nuevas Fotos
-                    </h6>
-
-                    <div class="upload-container p-4 mb-4 text-center">
-                        <input type="file" id="actual-btn" name="nuevas_fotos_extra" multiple accept="image/*">
-                        <label for="actual-btn" class="upload-btn-label mb-2">
-                            <span class="material-icons-round me-2">cloud_upload</span>
-                            Elegir archivos
-                        </label>
-                        <div id="preview-container" class="mt-2 d-none">
-                             <span class="material-icons-round align-middle text-success" style="font-size: 18px;">check_circle</span>
-                             <span id="file-chosen" style="color:#bbb; margin-left:10px;">Ningún archivo seleccionado</span>
-                        </div>
-                    </div>
-
-                    <hr class="border-secondary my-4">
-
-                    <h6 class="text-white mb-3">
-                        <span class="material-icons-round align-middle me-1 text-warning">draw</span>
-                        Actualizar Firma (Opcional)
-                    </h6>
-                    <p class="text-secondary small">Si dibujas aquí, se sobrescribirá la firma anterior.</p>
-                    
-                    <div class="signature-wrapper mb-3">
-                        <canvas id="signature-pad"></canvas>
-                    </div>
-                    <input type="hidden" name="firma_base64" id="firma_base64">
-                    <button type="button" class="btn btn-outline-secondary btn-sm mb-4" id="clear-signature">Borrar Firma</button>
-
-                    <div class="d-grid gap-2 mt-2">
-                        <button type="submit" class="btn btn-primary btn-oval-pro shadow-lg py-3" style="background: linear-gradient(45deg, #e91e63, #c2185b); border: none; font-size: 1.1rem;">
-                            GUARDAR CAMBIOS
-                        </button>
-                    </div>
-                </form>
+<form method="POST" enctype="multipart/form-data" id="editForm" class="timeline" novalidate>
+    {% csrf_token %}
+    {% if form.errors %}
+    <section class="panel">
+        <div class="form-panel">
+            <div class="alert">
+                Revisa los errores del formulario.
+                {% if form.non_field_errors %}
+                    <div style="margin-top: 8px;">{{ form.non_field_errors }}</div>
+                {% endif %}
             </div>
         </div>
-    </div>
-</div>
+    </section>
+    {% endif %}
 
+    <section class="panel">
+        <div class="panel-head">
+            <div>
+                <h2 class="panel-title">Datos del Procedimiento</h2>
+                <p class="panel-subtitle">Actualiza fecha, descripcion y foto principal</p>
+            </div>
+        </div>
+
+        <div class="form-panel form-grid">
+            <div class="field">
+                <label for="id_fecha">Fecha y Hora</label>
+                {% with fecha_val=form.fecha.value %}
+                <input id="id_fecha" type="datetime-local" name="fecha" class="input" value="{% if fecha_val %}{{ fecha_val }}{% else %}{{ object.fecha|date:'Y-m-d\\TH:i' }}{% endif %}">
+                {% endwith %}
+                {% if form.fecha.errors %}<small class="text-danger">{{ form.fecha.errors|join:", " }}</small>{% endif %}
+            </div>
+
+            <div class="field">
+                <label for="id_foto">Foto principal (opcional)</label>
+                <input id="id_foto" type="file" name="foto" class="input" accept="image/*">
+                {% if form.foto.errors %}<small class="text-danger">{{ form.foto.errors|join:", " }}</small>{% endif %}
+            </div>
+
+            <div class="field" style="grid-column: 1 / -1;">
+                <label for="id_procedimiento">Descripcion</label>
+                <textarea id="id_procedimiento" name="procedimiento" class="textarea" rows="4">{{ form.procedimiento.value|default:object.procedimiento }}</textarea>
+                {% if form.procedimiento.errors %}<small class="text-danger">{{ form.procedimiento.errors|join:", " }}</small>{% endif %}
+            </div>
+        </div>
+    </section>
+
+    <section class="panel">
+        <div class="panel-head">
+            <div>
+                <h2 class="panel-title">Gestion de Fotografias</h2>
+                <p class="panel-subtitle">Borra las existentes o agrega nuevas</p>
+            </div>
+        </div>
+
+        <div class="form-panel">
+            <div>
+                <p class="detail-label" style="margin-bottom: 10px;">Fotos actuales</p>
+                {% if object.fotos_tratamiento.all %}
+                <div class="media-grid">
+                    {% for foto in object.fotos_tratamiento.all %}
+                    <label class="media-thumb" style="position: relative; cursor: pointer;">
+                        <img src="{{ foto.imagen.url }}" alt="Foto existente">
+                        <input type="checkbox" name="borrar_foto_{{ foto.id }}" style="position: absolute; right: 7px; top: 7px; width: 18px; height: 18px; accent-color: #ff4f7b;">
+                    </label>
+                    {% endfor %}
+                </div>
+                {% else %}
+                    <span class="chip muted">Sin fotos extra para este tratamiento.</span>
+                {% endif %}
+            </div>
+
+            <div class="section-space upload-box">
+                <input type="file" id="actual-btn" name="nuevas_fotos_extra" class="hidden-input" multiple accept="image/*">
+                <label for="actual-btn" class="btn btn-primary" style="cursor: pointer;">
+                    <span class="material-symbols-outlined">add_photo_alternate</span>
+                    Agregar Fotos Nuevas
+                </label>
+                <p id="file-chosen" class="file-note">Ningun archivo nuevo seleccionado</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="panel">
+        <div class="panel-head">
+            <div>
+                <h2 class="panel-title">Firma del Paciente</h2>
+                <p class="panel-subtitle">Dibuja una firma para reemplazar la actual</p>
+            </div>
+        </div>
+
+        <div class="form-panel">
+            {% if object.firma %}
+                <p class="detail-label" style="margin-bottom: 8px;">Firma actual</p>
+                <div class="signature-box" style="margin-bottom: 14px;">
+                    <img src="{{ object.firma }}" alt="Firma actual">
+                </div>
+            {% endif %}
+
+            <div class="signature-wrapper">
+                <canvas id="signature-pad" class="signature-canvas"></canvas>
+            </div>
+
+            <input type="hidden" name="firma_base64" id="firma_base64">
+
+            <div class="inline-actions section-space">
+                <button type="button" class="btn btn-outline" id="clear-signature">
+                    <span class="material-symbols-outlined">ink_eraser</span>
+                    Borrar Firma Nueva
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <section class="inline-actions" style="justify-content: flex-end;">
+        <a href="{% url 'detalle_paciente' object.paciente.pk %}" class="btn btn-outline">Cancelar</a>
+        <button type="submit" class="btn btn-primary">
+            <span class="material-symbols-outlined">save</span>
+            Guardar Cambios
+        </button>
+    </section>
+</form>
+{% endblock %}
+
+{% block extra_js %}
 <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
 <script>
-    const actualBtn = document.getElementById('actual-btn');
-    const fileChosen = document.getElementById('file-chosen');
-    const previewContainer = document.getElementById('preview-container');
+    (function () {
+        var fileInput = document.getElementById('actual-btn');
+        var fileChosen = document.getElementById('file-chosen');
 
-    actualBtn.addEventListener('change', function(){
-        if (this.files.length > 0) {
-            fileChosen.textContent = this.files.length + " archivo(s) nuevo(s)";
-            previewContainer.classList.remove('d-none');
-        } else {
-            fileChosen.textContent = "Ningún archivo seleccionado";
-            previewContainer.classList.add('d-none');
+        if (fileInput && fileChosen) {
+            fileInput.addEventListener('change', function () {
+                if (this.files.length > 0) {
+                    fileChosen.textContent = this.files.length + ' archivo(s) nuevo(s)';
+                } else {
+                    fileChosen.textContent = 'Ningun archivo nuevo seleccionado';
+                }
+            });
         }
-    });
 
-    var canvas = document.getElementById('signature-pad');
-    var signaturePad = new SignaturePad(canvas, {
-        backgroundColor: 'rgb(255, 255, 255)',
-        penColor: 'rgb(0, 0, 0)'
-    });
-
-    function resizeCanvas() {
-        var ratio = Math.max(window.devicePixelRatio || 1, 1);
-        var data = signaturePad.toData(); 
-        canvas.width = canvas.offsetWidth * ratio;
-        canvas.height = canvas.offsetHeight * ratio;
-        canvas.getContext("2d").scale(ratio, ratio);
-        signaturePad.clear();
-        signaturePad.fromData(data); 
-    }
-
-    window.addEventListener("resize", resizeCanvas);
-    resizeCanvas();
-
-    document.getElementById('clear-signature').addEventListener('click', function () {
-        signaturePad.clear();
-    });
-
-    document.getElementById('editForm').addEventListener('submit', function (e) {
-        if (!signaturePad.isEmpty()) {
-            document.getElementById('firma_base64').value = signaturePad.toDataURL('image/png');
+        var canvas = document.getElementById('signature-pad');
+        if (!canvas) {
+            return;
         }
-    });
+
+        var signaturePad = new SignaturePad(canvas, {
+            backgroundColor: 'rgb(255, 255, 255)',
+            penColor: 'rgb(12, 22, 44)'
+        });
+
+        function resizeCanvas() {
+            var ratio = Math.max(window.devicePixelRatio || 1, 1);
+            var data = signaturePad.toData();
+            canvas.width = canvas.offsetWidth * ratio;
+            canvas.height = canvas.offsetHeight * ratio;
+            canvas.getContext('2d').scale(ratio, ratio);
+            signaturePad.clear();
+            signaturePad.fromData(data);
+        }
+
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        var clearBtn = document.getElementById('clear-signature');
+        if (clearBtn) {
+            clearBtn.addEventListener('click', function () {
+                signaturePad.clear();
+            });
+        }
+
+        var form = document.getElementById('editForm');
+        if (form) {
+            form.addEventListener('submit', function () {
+                if (!signaturePad.isEmpty()) {
+                    document.getElementById('firma_base64').value = signaturePad.toDataURL('image/png');
+                }
+            });
+        }
+    })();
 </script>
 {% endblock %}
+

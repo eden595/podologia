@@ -1,5 +1,15 @@
 {% extends "pacientes/base.html" %}
 
+{% block page_title %}Nueva Atencion{% endblock %}
+{% block topbar_search %}{% endblock %}
+
+{% block topbar_actions %}
+<a href="{% url 'detalle_paciente' paciente.pk %}" class="btn btn-outline">
+    <span class="material-symbols-outlined">arrow_back</span>
+    Volver a ficha
+</a>
+{% endblock %}
+
 {% block content %}
 <style>
     .upload-container {
@@ -8,50 +18,61 @@
         border-radius: 20px;
         transition: all 0.3s ease;
     }
+
     .upload-container:hover {
-        border-color: #e91e63;
-        background-color: rgba(233, 30, 99, 0.05);
+        border-color: #5ad3ff;
+        background-color: rgba(90, 211, 255, 0.08);
     }
-    #actual-btn { display: none; }
+
+    #actual-btn {
+        display: none;
+    }
+
     .upload-btn-label {
-        background: linear-gradient(45deg, #e91e63, #c2185b);
-        color: white;
+        background: linear-gradient(45deg, #5ad3ff, #4f7bff);
+        color: #ffffff;
         padding: 12px 25px;
         font-family: sans-serif;
         border-radius: 50px;
         cursor: pointer;
         transition: transform 0.2s;
-        box-shadow: 0 4px 15px rgba(233, 30, 99, 0.3);
+        box-shadow: 0 4px 15px rgba(90, 211, 255, 0.3);
         display: inline-flex;
         align-items: center;
         font-weight: 600;
         letter-spacing: 0.5px;
     }
-    .upload-btn-label:hover { transform: translateY(-2px); }
+
+    .upload-btn-label:hover {
+        transform: translateY(-2px);
+    }
+
     #file-chosen {
         margin-left: 15px;
         font-family: sans-serif;
         color: #bbbbbb;
         font-style: italic;
     }
+
     .signature-wrapper {
         width: 100%;
         position: relative;
-        background: white;
+        background: #ffffff;
         border-radius: 15px;
         overflow: hidden;
         border: 1px solid #ccc;
     }
+
     canvas {
         display: block;
         width: 100%;
         height: 200px;
     }
-    /* Estilo nuevo para la caja de consentimiento */
+
     .consent-box {
-        background-color: rgba(255, 235, 238, 0.95); /* Un tono rosado muy suave/blanco */
+        background-color: rgba(222, 239, 255, 0.95);
         color: #333;
-        border-left: 5px solid #e91e63;
+        border-left: 5px solid #4f7bff;
         border-radius: 10px;
     }
 </style>
@@ -60,94 +81,96 @@
     <div class="col-lg-8">
         <div class="d-flex align-items-center mb-4">
             <a href="{% url 'detalle_paciente' paciente.pk %}" class="text-decoration-none me-3">
-                <span class="material-icons-round" style="font-size: 36px; color: #e91e63;">arrow_back</span>
+                <span class="material-icons-round" style="font-size: 36px; color: #5ad3ff;">arrow_back</span>
             </a>
             <div>
-                <h2 class="fw-bold text-white mb-0">Nueva Atención</h2>
+                <h2 class="fw-bold text-white mb-0">Nueva Atencion</h2>
                 <p class="text-secondary mb-0">Paciente: <strong class="text-primary">{{ paciente.nombre }}</strong></p>
             </div>
         </div>
 
         <div class="card card-pro shadow-lg border-0">
             <div class="card-body p-4 p-md-5">
-                
-                <form method="POST" enctype="multipart/form-data" id="tratamientoForm">
+                <form method="POST" enctype="multipart/form-data" id="tratamientoForm" novalidate>
                     {% csrf_token %}
-                    
+
                     <div class="mb-4">
-                        <label class="form-label text-white ms-3 small">Fecha y Hora de Atención</label>
-                        <input type="datetime-local" name="fecha" class="form-control" style="border-radius: 20px;" 
-                               value="{% now 'Y-m-d\TH:i' %}">
+                        <label class="form-label text-white ms-3 small">Fecha y Hora de Atencion</label>
+                        <input
+                            type="datetime-local"
+                            name="fecha"
+                            class="form-control"
+                            style="border-radius: 20px;"
+                            value="{% if fecha_previo %}{{ fecha_previo }}{% else %}{% now 'Y-m-d\\TH:i' %}{% endif %}">
                     </div>
 
                     <h6 class="text-secondary text-uppercase fw-bold mb-4 small" style="letter-spacing: 1px;">
                         <span class="material-icons-round align-middle me-1 text-primary">checklist</span>
                         Procedimientos Realizados
                     </h6>
-                    
+
                     <div class="row g-3 mb-4">
                         <div class="col-md-6">
-                            <label class="p-3 rounded-4 border border-secondary d-flex align-items-center justify-content-between group-hover" style="background: #252525; cursor: pointer;">
-                                <span class="text-white mb-0 fw-medium">Onicotomía</span>
+                            <label class="p-3 rounded-4 border border-secondary d-flex align-items-center justify-content-between" style="background: #252525; cursor: pointer;">
+                                <span class="text-white mb-0 fw-medium">ONICOTOMIA</span>
                                 <div class="form-check mb-0">
-                                    <input class="form-check-input" type="checkbox" name="tratamientos_check" value="Onicotomía" style="width: 25px; height: 25px; border-color: #e91e63;">
+                                    <input class="form-check-input" type="checkbox" name="tratamientos_check" value="ONICOTOMIA" style="width: 25px; height: 25px; border-color: #5ad3ff;" {% if 'ONICOTOMIA' in tratamientos_previos %}checked{% endif %}>
                                 </div>
                             </label>
                         </div>
                         <div class="col-md-6">
-                            <label class="p-3 rounded-4 border border-secondary d-flex align-items-center justify-content-between group-hover" style="background: #252525; cursor: pointer;">
-                                <span class="text-white mb-0 fw-medium">Debastado de Lámina</span>
+                            <label class="p-3 rounded-4 border border-secondary d-flex align-items-center justify-content-between" style="background: #252525; cursor: pointer;">
+                                <span class="text-white mb-0 fw-medium">DEBASTADO UNGUEAL</span>
                                 <div class="form-check mb-0">
-                                    <input class="form-check-input" type="checkbox" name="tratamientos_check" value="Debastado de Lámina" style="width: 25px; height: 25px; border-color: #e91e63;">
+                                    <input class="form-check-input" type="checkbox" name="tratamientos_check" value="DEBASTADO UNGUEAL" style="width: 25px; height: 25px; border-color: #5ad3ff;" {% if 'DEBASTADO UNGUEAL' in tratamientos_previos %}checked{% endif %}>
                                 </div>
                             </label>
                         </div>
                         <div class="col-md-6">
-                            <label class="p-3 rounded-4 border border-secondary d-flex align-items-center justify-content-between group-hover" style="background: #252525; cursor: pointer;">
-                                <span class="text-white mb-0 fw-medium">Resecado de Hiperqueratosis</span>
+                            <label class="p-3 rounded-4 border border-secondary d-flex align-items-center justify-content-between" style="background: #252525; cursor: pointer;">
+                                <span class="text-white mb-0 fw-medium">RESECADO DE HIPERQUERATOSIS</span>
                                 <div class="form-check mb-0">
-                                    <input class="form-check-input" type="checkbox" name="tratamientos_check" value="Resecado de Hiperqueratosis" style="width: 25px; height: 25px; border-color: #e91e63;">
+                                    <input class="form-check-input" type="checkbox" name="tratamientos_check" value="RESECADO DE HIPERQUERATOSIS" style="width: 25px; height: 25px; border-color: #5ad3ff;" {% if 'RESECADO DE HIPERQUERATOSIS' in tratamientos_previos %}checked{% endif %}>
                                 </div>
                             </label>
                         </div>
                         <div class="col-md-6">
-                            <label class="p-3 rounded-4 border border-secondary d-flex align-items-center justify-content-between group-hover" style="background: #252525; cursor: pointer;">
-                                <span class="text-white mb-0 fw-medium">Curación</span>
+                            <label class="p-3 rounded-4 border border-secondary d-flex align-items-center justify-content-between" style="background: #252525; cursor: pointer;">
+                                <span class="text-white mb-0 fw-medium">CURACION</span>
                                 <div class="form-check mb-0">
-                                    <input class="form-check-input" type="checkbox" name="tratamientos_check" value="Curación" style="width: 25px; height: 25px; border-color: #e91e63;">
+                                    <input class="form-check-input" type="checkbox" name="tratamientos_check" value="CURACION" style="width: 25px; height: 25px; border-color: #5ad3ff;" {% if 'CURACION' in tratamientos_previos %}checked{% endif %}>
                                 </div>
                             </label>
                         </div>
                         <div class="col-md-6">
-                            <label class="p-3 rounded-4 border border-secondary d-flex align-items-center justify-content-between group-hover" style="background: #252525; cursor: pointer;">
-                                <span class="text-white mb-0 fw-medium">Espiculectomía</span>
+                            <label class="p-3 rounded-4 border border-secondary d-flex align-items-center justify-content-between" style="background: #252525; cursor: pointer;">
+                                <span class="text-white mb-0 fw-medium">ESPICULECTOMIA</span>
                                 <div class="form-check mb-0">
-                                    <input class="form-check-input" type="checkbox" name="tratamientos_check" value="Espiculectomía" style="width: 25px; height: 25px; border-color: #e91e63;">
+                                    <input class="form-check-input" type="checkbox" name="tratamientos_check" value="ESPICULECTOMIA" style="width: 25px; height: 25px; border-color: #5ad3ff;" {% if 'ESPICULECTOMIA' in tratamientos_previos %}checked{% endif %}>
                                 </div>
                             </label>
                         </div>
                         <div class="col-md-6">
-                            <label class="p-3 rounded-4 border border-secondary d-flex align-items-center justify-content-between group-hover" style="background: #252525; cursor: pointer;">
-                                <span class="text-white mb-0 fw-medium">Ortonixia</span>
+                            <label class="p-3 rounded-4 border border-secondary d-flex align-items-center justify-content-between" style="background: #252525; cursor: pointer;">
+                                <span class="text-white mb-0 fw-medium">ORTONIXIA</span>
                                 <div class="form-check mb-0">
-                                    <input class="form-check-input" type="checkbox" name="tratamientos_check" value="Ortonixia" style="width: 25px; height: 25px; border-color: #e91e63;">
-                                </div>
-                            </label>
-                        </div>
-                        
-                        <div class="col-md-6">
-                            <label class="p-3 rounded-4 border border-secondary d-flex align-items-center justify-content-between group-hover" style="background: #252525; cursor: pointer;">
-                                <span class="text-white mb-0 fw-medium">Láser</span>
-                                <div class="form-check mb-0">
-                                    <input class="form-check-input" type="checkbox" name="tratamientos_check" value="Láser" style="width: 25px; height: 25px; border-color: #e91e63;">
+                                    <input class="form-check-input" type="checkbox" name="tratamientos_check" value="ORTONIXIA" style="width: 25px; height: 25px; border-color: #5ad3ff;" {% if 'ORTONIXIA' in tratamientos_previos %}checked{% endif %}>
                                 </div>
                             </label>
                         </div>
                         <div class="col-md-6">
-                            <label class="p-3 rounded-4 border border-secondary d-flex align-items-center justify-content-between group-hover" style="background: #252525; cursor: pointer;">
-                                <span class="text-white mb-0 fw-medium">Técnica Fenol Alcohol</span>
+                            <label class="p-3 rounded-4 border border-secondary d-flex align-items-center justify-content-between" style="background: #252525; cursor: pointer;">
+                                <span class="text-white mb-0 fw-medium">LASER ONICOMICOSIS</span>
                                 <div class="form-check mb-0">
-                                    <input class="form-check-input" type="checkbox" name="tratamientos_check" value="Técnica Fenol Alcohol" style="width: 25px; height: 25px; border-color: #e91e63;">
+                                    <input class="form-check-input" type="checkbox" name="tratamientos_check" value="LASER ONICOMICOSIS" style="width: 25px; height: 25px; border-color: #5ad3ff;" {% if 'LASER ONICOMICOSIS' in tratamientos_previos %}checked{% endif %}>
+                                </div>
+                            </label>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="p-3 rounded-4 border border-secondary d-flex align-items-center justify-content-between" style="background: #252525; cursor: pointer;">
+                                <span class="text-white mb-0 fw-medium">TECNICA FENOL ALCOHOL</span>
+                                <div class="form-check mb-0">
+                                    <input class="form-check-input" type="checkbox" name="tratamientos_check" value="TECNICA FENOL ALCOHOL" style="width: 25px; height: 25px; border-color: #5ad3ff;" {% if 'TECNICA FENOL ALCOHOL' in tratamientos_previos %}checked{% endif %}>
                                 </div>
                             </label>
                         </div>
@@ -155,30 +178,30 @@
 
                     <div class="mb-4">
                         <label class="form-label text-white ms-3 small">Notas / Otros Procedimientos</label>
-                        <textarea name="otros_texto" class="form-control" rows="3" style="border-radius: 20px;" placeholder="Detalles adicionales de la atención..."></textarea>
+                        <textarea name="otros_texto" class="form-control" rows="3" style="border-radius: 20px;" placeholder="Detalles adicionales de la atencion...">{{ otros_previos }}</textarea>
                     </div>
 
                     <hr class="border-secondary my-5 opacity-50">
 
                     <h6 class="text-secondary text-uppercase fw-bold mb-4 small" style="letter-spacing: 1px;">
                         <span class="material-icons-round align-middle me-1 text-primary">add_a_photo</span>
-                        Evidencia Fotográfica
+                        Evidencia Fotografica
                     </h6>
 
                     <div class="upload-container p-4 mb-5 text-center">
                         <input type="file" id="actual-btn" name="fotos_extra" multiple accept="image/*">
-                        
+
                         <label for="actual-btn" class="upload-btn-label mb-3">
                             <span class="material-icons-round me-2">cloud_upload</span>
                             Seleccionar Fotos
                         </label>
-                        
+
                         <div id="preview-container" class="mt-2 d-none">
-                             <span class="material-icons-round align-middle text-success">check_circle</span>
-                             <span id="file-chosen">Ningún archivo seleccionado</span>
+                            <span class="material-icons-round align-middle text-success">check_circle</span>
+                            <span id="file-chosen">Ningun archivo seleccionado</span>
                         </div>
-                        
-                        <p class="text-white-50 small mb-0 mt-2">Puedes subir múltiples imágenes (JPG, PNG) desde tu dispositivo.</p>
+
+                        <p class="text-white-50 small mb-0 mt-2">Puedes subir multiples imagenes (JPG, PNG) desde tu dispositivo.</p>
                     </div>
 
                     <hr class="border-secondary my-5 opacity-50">
@@ -188,32 +211,31 @@
                         Conformidad del Paciente
                     </h6>
 
-                   <div class="consent-box p-3 mb-3">
-                        <h6 class="fw-bold mb-2" style="color: #c2185b;">Consentimiento informado:</h6>
+                    <div class="consent-box p-3 mb-3">
+                        <h6 class="fw-bold mb-2" style="color: #3159bf;">Consentimiento informado:</h6>
                         <p class="mb-0 small" style="line-height: 1.5;">
-                            El usuario deja constancia, que se le explica sobre los tratamientos podológicos, y que
-                            no están exentos de riesgos, como lesiones cortantes, abrasivas o irritantes.
-                            <br> Manifiesta que el profesional de salud le entrega esta información y le da la
-                            oportunidad de preguntar y resolver dudas.
-                            <br> Además, que ha entendido las condiciones, objetivos y cuidados de los
-                            procedimientos realizados.
+                            El usuario deja constancia de que se le explica sobre los tratamientos podologicos y sus riesgos.
+                            Tambien se entrega informacion clara para resolver dudas antes del procedimiento.
                         </p>
                     </div>
+
                     <div class="signature-wrapper mb-3 shadow-sm">
                         <canvas id="signature-pad"></canvas>
                     </div>
-                    
+
                     <input type="hidden" name="firma_base64" id="firma_base64">
-                    
+
                     <div class="d-flex justify-content-end mb-5">
                         <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill px-3" id="clear-signature">
-                            <span class="material-icons-round align-middle" style="font-size: 16px;">delete_sweep</span> Borrar Firma
+                            <span class="material-icons-round align-middle" style="font-size: 16px;">delete_sweep</span>
+                            Borrar Firma
                         </button>
                     </div>
 
                     <div class="d-grid">
-                        <button type="submit" class="btn btn-primary btn-oval-pro py-3 shadow-lg" style="background: linear-gradient(45deg, #e91e63, #c2185b); border:none; font-size: 1.1rem;">
-                            <span class="material-icons-round align-middle me-2">save</span> REGISTRAR ATENCIÓN
+                        <button type="submit" class="btn btn-primary btn-oval-pro py-3 shadow-lg" style="background: linear-gradient(45deg, #5ad3ff, #4f7bff); border:none; font-size: 1.1rem;">
+                            <span class="material-icons-round align-middle me-2">save</span>
+                            REGISTRAR ATENCION
                         </button>
                     </div>
                 </form>
@@ -228,12 +250,12 @@
     const fileChosen = document.getElementById('file-chosen');
     const previewContainer = document.getElementById('preview-container');
 
-    actualBtn.addEventListener('change', function(){
+    actualBtn.addEventListener('change', function () {
         if (this.files.length > 0) {
-            fileChosen.textContent = this.files.length + " archivo(s) seleccionado(s)";
+            fileChosen.textContent = this.files.length + ' archivo(s) seleccionado(s)';
             previewContainer.classList.remove('d-none');
         } else {
-            fileChosen.textContent = "Ningún archivo seleccionado";
+            fileChosen.textContent = 'Ningun archivo seleccionado';
             previewContainer.classList.add('d-none');
         }
     });
@@ -249,19 +271,19 @@
         var data = signaturePad.toData();
         canvas.width = canvas.offsetWidth * ratio;
         canvas.height = canvas.offsetHeight * ratio;
-        canvas.getContext("2d").scale(ratio, ratio);
-        signaturePad.clear(); 
+        canvas.getContext('2d').scale(ratio, ratio);
+        signaturePad.clear();
         signaturePad.fromData(data);
     }
 
-    window.addEventListener("resize", resizeCanvas);
+    window.addEventListener('resize', resizeCanvas);
     resizeCanvas();
 
     document.getElementById('clear-signature').addEventListener('click', function () {
         signaturePad.clear();
     });
 
-    document.getElementById('tratamientoForm').addEventListener('submit', function (e) {
+    document.getElementById('tratamientoForm').addEventListener('submit', function () {
         if (!signaturePad.isEmpty()) {
             document.getElementById('firma_base64').value = signaturePad.toDataURL('image/png');
         }

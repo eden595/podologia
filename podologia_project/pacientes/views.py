@@ -1,67 +1,284 @@
-from django.shortcuts import render, redirect, get_object_or_404
-from django.urls import reverse_lazy
-from django.db.models import Q
+from collections import Counter
+from datetime import timedelta
+import re
+import unicodedata
+
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.views.generic import ListView, CreateView, UpdateView, DeleteView
-from django.utils import timezone # Importar timezone
-from .models import Paciente, Tratamiento, FotoTratamiento
-from .forms import PacienteForm, TratamientoForm 
+from django.db.models import Prefetch, Q
+from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse_lazy
+from django.utils import timezone
+from django.utils.dateparse import parse_datetime
+from django.views.decorators.http import require_http_methods
+from django.views.generic import CreateView, DeleteView, ListView, UpdateView
 
-# ==========================================
-#              GESTIÓN DE PACIENTES
-# ==========================================
+from .forms import PacienteForm, TratamientoForm
+from .models import FotoTratamiento, Paciente, Tratamiento
 
-class PacienteListView(LoginRequiredMixin, ListView):
+MAX_IMAGENES_POR_TRATAMIENTO = 10
+MAX_IMAGEN_BYTES = 10 * 1024 * 1024
+MAX_OTROS_CHARS = 1200
+
+PROCEDIMIENTOS_SELECCIONABLES = [
+    'ONICOTOMIA',
+    'DEBASTADO UNGUEAL',
+    'RESECADO DE HIPERQUERATOSIS',
+    'CURACION',
+    'ESPICULECTOMIA',
+    'ORTONIXIA',
+    'LASER ONICOMICOSIS',
+    'TECNICA FENOL ALCOHOL',
+]
+PROCEDIMIENTOS_PERMITIDOS = set(PROCEDIMIENTOS_SELECCIONABLES)
+PROCEDIMIENTOS_ALIASES = {
+    'ONICOTOMIA': 'ONICOTOMIA',
+    'DEBASTADO DE LAMINA': 'DEBASTADO UNGUEAL',
+    'DEBASTADO LAMINA': 'DEBASTADO UNGUEAL',
+    'DEBASTADO UNGUEAL': 'DEBASTADO UNGUEAL',
+    'DESBASTADO UNGUEAL': 'DEBASTADO UNGUEAL',
+    'RESECADO DE HIPERQUERATOSIS': 'RESECADO DE HIPERQUERATOSIS',
+    'RESECADO': 'RESECADO DE HIPERQUERATOSIS',
+    'CURACION': 'CURACION',
+    'ESPICULECTOMIA': 'ESPICULECTOMIA',
+    'ORTONIXIA': 'ORTONIXIA',
+    'LASER': 'LASER ONICOMICOSIS',
+    'LASER ONICOMICOSIS': 'LASER ONICOMICOSIS',
+    'TECNICA FENOL ALCOHOL': 'TECNICA FENOL ALCOHOL',
+    'FENOL ALCOHOL': 'TECNICA FENOL ALCOHOL',
+}
+
+
+def _normalizar_texto(valor: str) -> str:
+    valor = valor or ''
+    try:
+        valor = valor.encode('latin1').decode('utf-8')
+    except UnicodeError:
+        pass
+
+    valor = unicodedata.normalize('NFKD', valor)
+    valor = ''.join(ch for ch in valor if not unicodedata.combining(ch))
+    valor = valor.upper()
+    valor = re.sub(r'[^A-Z0-9 ]+', ' ', valor)
+    return re.sub(r'\s+', ' ', valor).strip()
+
+
+def _normalizar_etiqueta_procedimiento(valor: str) -> str:
+    normalizado = _normalizar_texto(valor)
+    if not normalizado:
+        return ''
+    return PROCEDIMIENTOS_ALIASES.get(normalizado, normalizado)
+
+
+def _normalizar_procedimiento_registrado(texto: str) -> str:
+    texto = (texto or '').strip()
+    if not texto:
+        return ''
+
+    bloque_principal, separador, bloque_notas = texto.partition('|')
+    items = [
+        _normalizar_etiqueta_procedimiento(item)
+        for item in bloque_principal.split(',')
+        if item.strip()
+    ]
+    items_unicos = []
+    for item in items:
+        if item and item not in items_unicos:
+            items_unicos.append(item)
+
+    principal = ', '.join(items_unicos)
+    notas = bloque_notas.strip()
+    if separador and notas:
+        if principal:
+            return f'{principal} | {notas}'
+        return notas
+    return principal
+
+
+def _contexto_form_tratamiento(paciente, seleccionados=None, otros='', fecha=''):
+    return {
+        'paciente': paciente,
+        'tratamientos_previos': seleccionados or [],
+        'otros_previos': otros or '',
+        'fecha_previo': fecha or '',
+        'procedimientos_disponibles': PROCEDIMIENTOS_SELECCIONABLES,
+    }
+
+
+def _agregar_errores_formulario(request, form):
+    for field_name, errores in form.errors.items():
+        if field_name == '__all__':
+            etiqueta = 'Formulario'
+        else:
+            field = form.fields.get(field_name)
+            etiqueta = (field.label if field else field_name).strip() or field_name
+
+        for error in errores:
+            messages.error(request, f'{etiqueta}: {error}')
+
+
+class DashboardView(LoginRequiredMixin, ListView):
     model = Paciente
     template_name = 'pacientes/lista_pacientes.html'
     context_object_name = 'pacientes'
-    paginate_by = 10 
+    paginate_by = 10
+    http_method_names = ['get', 'head', 'options']
 
     def get_queryset(self):
-        queryset = super().get_queryset()
+        return super().get_queryset().order_by('-id')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        hoy = timezone.localdate()
+        inicio_7_dias = hoy - timedelta(days=6)
+
+        conteo_procedimientos = Counter()
+        procedimientos_registrados = Tratamiento.objects.values_list('procedimiento', flat=True)
+        for procedimiento in procedimientos_registrados:
+            if not procedimiento:
+                continue
+
+            bloque_principal = procedimiento.split('|', 1)[0]
+            items = [item.strip() for item in bloque_principal.split(',') if item.strip()]
+
+            if items:
+                for item in items:
+                    etiqueta = _normalizar_etiqueta_procedimiento(item)
+                    if etiqueta:
+                        conteo_procedimientos[etiqueta] += 1
+            else:
+                conteo_procedimientos['OTROS / NOTAS'] += 1
+
+        top_procedimientos = conteo_procedimientos.most_common(6)
+        restantes = sum(conteo_procedimientos.values()) - sum(valor for _, valor in top_procedimientos)
+        if restantes > 0:
+            top_procedimientos.append(('OTROS', restantes))
+
+        etiquetas_chart = [nombre for nombre, _ in top_procedimientos]
+        valores_chart = [cantidad for _, cantidad in top_procedimientos]
+
+        context['ultimos_pacientes'] = Paciente.objects.order_by('-id')[:6]
+        context['tratamientos_7_dias'] = Tratamiento.objects.filter(
+            fecha__date__gte=inicio_7_dias,
+            fecha__date__lte=hoy,
+        ).count()
+        context['tratamientos_chart_labels'] = etiquetas_chart
+        context['tratamientos_chart_values'] = valores_chart
+        context['tratamientos_chart_total'] = sum(valores_chart)
+        return context
+
+
+class PacienteListView(LoginRequiredMixin, ListView):
+    model = Paciente
+    template_name = 'pacientes/administrar_pacientes.html'
+    context_object_name = 'pacientes'
+    paginate_by = 10
+    http_method_names = ['get', 'head', 'options']
+
+    def get_paginate_by(self, queryset):
+        per_page = (self.request.GET.get('per_page') or '').strip()
+        if per_page in {'10', '20', '50'}:
+            return int(per_page)
+        return self.paginate_by
+
+    def get_queryset(self):
+        queryset = super().get_queryset().prefetch_related(
+            Prefetch(
+                'tratamiento_set',
+                queryset=Tratamiento.objects.order_by('-fecha'),
+                to_attr='tratamientos_ordenados',
+            )
+        )
         termino = self.request.GET.get('buscar')
-        
+
         if termino:
-            # 1. LIMPIEZA: Quitamos espacios vacíos al inicio y final (Vital para celular)
             termino_limpio = termino.strip()
-            
-            # 2. SEPARACIÓN: Dividimos lo que escribió en palabras
-            # Ejemplo: "Leopoldo Fuentes " se convierte en ["Leopoldo", "Fuentes"]
             palabras = termino_limpio.split()
-            
-            # 3. CONSTRUCCIÓN DE LA BÚSQUEDA INTELIGENTE
-            # Empezamos con una consulta vacía
             query = Q()
-            
+
             for palabra in palabras:
-                # Agregamos la condición: Que el nombre O el rut contengan ESTA palabra
-                # El operador & (AND) obliga a que se cumplan todas las palabras
                 query &= (Q(nombre__icontains=palabra) | Q(rut__icontains=palabra))
-            
-            # 4. FILTRADO FINAL
+
             queryset = queryset.filter(query).order_by('-id')
         else:
             queryset = queryset.order_by('-id')
-            
+
+        estado = (self.request.GET.get('estado') or '').strip()
+        if estado == 'con_historial':
+            queryset = queryset.filter(tratamiento__isnull=False).distinct()
+        elif estado == 'sin_historial':
+            queryset = queryset.filter(tratamiento__isnull=True)
+
         return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        hoy = timezone.localdate()
+        total_pacientes = Paciente.objects.count()
+        en_tratamiento = Tratamiento.objects.values('paciente_id').distinct().count()
+        per_page = (self.request.GET.get('per_page') or '').strip()
+
+        context['buscar_actual'] = (self.request.GET.get('buscar') or '').strip()
+        context['estado_actual'] = (self.request.GET.get('estado') or '').strip()
+        context['per_page_actual'] = per_page if per_page in {'10', '20', '50'} else str(self.paginate_by)
+
+        context['total_pacientes'] = total_pacientes
+        context['atenciones_hoy'] = Tratamiento.objects.filter(fecha__date=hoy).count()
+        context['en_tratamiento'] = en_tratamiento
+        context['pacientes_sin_historial'] = max(total_pacientes - en_tratamiento, 0)
+        return context
+
 
 class PacienteCreateView(LoginRequiredMixin, CreateView):
     model = Paciente
     form_class = PacienteForm
     template_name = 'pacientes/formulario_paciente.html'
     success_url = reverse_lazy('lista_pacientes')
+    http_method_names = ['get', 'post', 'head', 'options']
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        messages.success(self.request, 'Paciente registrado correctamente.')
+        return response
+
+    def form_invalid(self, form):
+        messages.error(self.request, 'No se pudo guardar el paciente. Revisa los campos marcados.')
+        _agregar_errores_formulario(self.request, form)
+        return super().form_invalid(form)
+
 
 class PacienteUpdateView(LoginRequiredMixin, UpdateView):
     model = Paciente
     form_class = PacienteForm
     template_name = 'pacientes/formulario_paciente.html'
     success_url = reverse_lazy('lista_pacientes')
+    http_method_names = ['get', 'post', 'head', 'options']
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        messages.success(self.request, 'Paciente actualizado correctamente.')
+        return response
+
+    def form_invalid(self, form):
+        messages.error(self.request, 'No se pudo actualizar el paciente. Revisa los campos marcados.')
+        _agregar_errores_formulario(self.request, form)
+        return super().form_invalid(form)
+
 
 class PacienteDeleteView(LoginRequiredMixin, DeleteView):
     model = Paciente
     template_name = 'pacientes/eliminar_paciente.html'
     success_url = reverse_lazy('lista_pacientes')
+    http_method_names = ['get', 'post', 'head', 'options']
+
+    def delete(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        nombre = self.object.nombre
+        response = super().delete(request, *args, **kwargs)
+        messages.success(request, f'Paciente "{nombre}" eliminado correctamente.')
+        return response
+
 
 @login_required
 def detalle_paciente(request, pk):
@@ -72,94 +289,191 @@ def detalle_paciente(request, pk):
     except AttributeError:
         fotos_galeria = []
 
-    return render(request, 'pacientes/detalle_paciente.html', {
-        'paciente': paciente, 
-        'historial': historial,
-        'fotos_galeria': fotos_galeria
-    })
+    return render(
+        request,
+        'pacientes/detalle_paciente.html',
+        {
+            'paciente': paciente,
+            'historial': historial,
+            'fotos_galeria': fotos_galeria,
+        },
+    )
 
-# ==========================================
-#           GESTIÓN DE TRATAMIENTOS
-# ==========================================
 
 @login_required
+@require_http_methods(['GET', 'POST'])
 def registrar_tratamiento(request, pk):
     paciente = get_object_or_404(Paciente, pk=pk)
-    
-    if request.method == "POST":
-        seleccionados = request.POST.getlist('tratamientos_check')
-        otros = request.POST.get('otros_texto', '')
-        fecha_input = request.POST.get('fecha') # Capturamos la fecha
-        
-        procedimiento_final = ", ".join(seleccionados)
-        if otros: 
+
+    if request.method == 'POST':
+        seleccionados_raw = [item.strip() for item in request.POST.getlist('tratamientos_check') if item.strip()]
+        seleccionados = []
+        for item in seleccionados_raw:
+            etiqueta = _normalizar_etiqueta_procedimiento(item)
+            if not etiqueta or etiqueta not in PROCEDIMIENTOS_PERMITIDOS:
+                messages.error(request, 'Se detecto un procedimiento no permitido en el formulario.')
+                return render(
+                    request,
+                    'pacientes/formulario_tratamiento.html',
+                    _contexto_form_tratamiento(paciente),
+                )
+            if etiqueta not in seleccionados:
+                seleccionados.append(etiqueta)
+
+        otros = request.POST.get('otros_texto', '').strip()
+        fecha_input = request.POST.get('fecha', '').strip()
+        firma_base64 = request.POST.get('firma_base64', '').strip()
+        imagenes_extra = request.FILES.getlist('fotos_extra')
+        contexto_form = _contexto_form_tratamiento(paciente, seleccionados, otros, fecha_input)
+
+        if not seleccionados and not otros:
+            messages.error(request, 'Debes seleccionar al menos un procedimiento o escribir una nota.')
+            return render(request, 'pacientes/formulario_tratamiento.html', contexto_form)
+
+        if len(otros) > MAX_OTROS_CHARS:
+            messages.error(request, f'El campo "Notas" permite maximo {MAX_OTROS_CHARS} caracteres.')
+            return render(request, 'pacientes/formulario_tratamiento.html', contexto_form)
+
+        if not firma_base64 or not firma_base64.startswith('data:image/'):
+            messages.error(request, 'La firma del paciente es obligatoria.')
+            return render(request, 'pacientes/formulario_tratamiento.html', contexto_form)
+
+        if len(imagenes_extra) > MAX_IMAGENES_POR_TRATAMIENTO:
+            messages.error(request, f'Puedes subir un maximo de {MAX_IMAGENES_POR_TRATAMIENTO} imagenes por tratamiento.')
+            return render(request, 'pacientes/formulario_tratamiento.html', contexto_form)
+
+        for imagen in imagenes_extra:
+            if not getattr(imagen, 'content_type', '').startswith('image/'):
+                messages.error(request, f'El archivo "{imagen.name}" no es una imagen valida.')
+                return render(request, 'pacientes/formulario_tratamiento.html', contexto_form)
+
+            if imagen.size > MAX_IMAGEN_BYTES:
+                messages.error(request, f'La imagen "{imagen.name}" supera el limite de 10 MB.')
+                return render(request, 'pacientes/formulario_tratamiento.html', contexto_form)
+
+        procedimiento_final = ', '.join(seleccionados)
+        if otros:
             if procedimiento_final:
-                procedimiento_final += f" | Notas: {otros}"
+                procedimiento_final += f' | NOTAS: {otros}'
             else:
-                procedimiento_final = f"Notas: {otros}"
+                procedimiento_final = f'NOTAS: {otros}'
 
-        # Si el usuario no puso fecha, usar ahora mismo
-        fecha_final = fecha_input if fecha_input else timezone.now()
+        fecha_final = timezone.now()
+        if fecha_input:
+            fecha_parseada = parse_datetime(fecha_input)
+            if not fecha_parseada:
+                messages.error(request, 'La fecha ingresada no es valida.')
+                return render(request, 'pacientes/formulario_tratamiento.html', contexto_form)
 
-        # Crear Tratamiento
+            if timezone.is_naive(fecha_parseada):
+                fecha_parseada = timezone.make_aware(fecha_parseada, timezone.get_current_timezone())
+
+            if fecha_parseada > timezone.now() + timedelta(minutes=5):
+                messages.error(request, 'La fecha no puede estar en el futuro.')
+                return render(request, 'pacientes/formulario_tratamiento.html', contexto_form)
+
+            fecha_final = fecha_parseada
+
+        foto_principal = imagenes_extra[0] if imagenes_extra else None
+
         nuevo_tratamiento = Tratamiento.objects.create(
             paciente=paciente,
-            fecha=fecha_final, # Guardamos la fecha elegida
+            fecha=fecha_final,
             procedimiento=procedimiento_final,
-            foto=request.FILES.getlist('fotos_extra')[0] if request.FILES.getlist('fotos_extra') else None, 
-            firma=request.POST.get('firma_base64')
+            foto=foto_principal,
+            firma=firma_base64,
         )
 
-        # Guardar fotos EXTRA
-        imagenes_extra = request.FILES.getlist('fotos_extra')
-        for img in imagenes_extra:
+        fotos_extra_para_guardar = imagenes_extra[1:] if foto_principal else []
+        for img in fotos_extra_para_guardar:
             FotoTratamiento.objects.create(
                 tratamiento=nuevo_tratamiento,
-                imagen=img
+                imagen=img,
             )
 
+        messages.success(request, 'Tratamiento registrado correctamente.')
         return redirect('detalle_paciente', pk=paciente.pk)
-        
-    return render(request, 'pacientes/formulario_tratamiento.html', {'paciente': paciente})
+
+    return render(
+        request,
+        'pacientes/formulario_tratamiento.html',
+        _contexto_form_tratamiento(paciente),
+    )
+
 
 class TratamientoUpdateView(LoginRequiredMixin, UpdateView):
     model = Tratamiento
     form_class = TratamientoForm
     template_name = 'pacientes/formulario_tratamiento_editar.html'
-    
+    http_method_names = ['get', 'post', 'head', 'options']
+
     def form_valid(self, form):
+        nuevas_imagenes = self.request.FILES.getlist('nuevas_fotos_extra')
+        if len(nuevas_imagenes) > MAX_IMAGENES_POR_TRATAMIENTO:
+            form.add_error('foto', f'Puedes subir maximo {MAX_IMAGENES_POR_TRATAMIENTO} imagenes nuevas por edicion.')
+            messages.error(self.request, 'No se pudieron guardar los cambios. Excediste el limite de imagenes.')
+            return self.form_invalid(form)
+
+        for imagen in nuevas_imagenes:
+            if not getattr(imagen, 'content_type', '').startswith('image/'):
+                form.add_error('foto', f'El archivo "{imagen.name}" no es una imagen valida.')
+                messages.error(self.request, 'No se pudieron guardar los cambios. Hay archivos invalidos.')
+                return self.form_invalid(form)
+
+            if imagen.size > MAX_IMAGEN_BYTES:
+                form.add_error('foto', f'La imagen "{imagen.name}" supera el limite de 10 MB.')
+                messages.error(self.request, 'No se pudieron guardar los cambios. Hay imagenes demasiado grandes.')
+                return self.form_invalid(form)
+
+        nueva_firma = self.request.POST.get('firma_base64', '').strip()
+        if nueva_firma and not nueva_firma.startswith('data:image/'):
+            form.add_error(None, 'La firma enviada no tiene un formato valido.')
+            messages.error(self.request, 'No se pudieron guardar los cambios. La firma no es valida.')
+            return self.form_invalid(form)
+
+        form.instance.procedimiento = _normalizar_procedimiento_registrado(form.cleaned_data.get('procedimiento', ''))
         response = super().form_valid(form)
         tratamiento = self.object
 
-        # 1. ACTUALIZAR FIRMA
-        nueva_firma = self.request.POST.get('firma_base64')
-        if nueva_firma and "data:image" in nueva_firma:
+        if nueva_firma:
             tratamiento.firma = nueva_firma
-            tratamiento.save()
+            tratamiento.save(update_fields=['firma'])
 
-        # 2. AGREGAR FOTOS NUEVAS
-        nuevas_imagenes = self.request.FILES.getlist('nuevas_fotos_extra')
         for img in nuevas_imagenes:
             FotoTratamiento.objects.create(tratamiento=tratamiento, imagen=img)
 
-        # 3. BORRAR FOTOS MARCADAS
         for key in self.request.POST:
             if key.startswith('borrar_foto_'):
-                foto_id = key.split('_')[2] 
+                foto_id = key.split('_')[2]
                 try:
                     foto = FotoTratamiento.objects.get(id=foto_id, tratamiento=tratamiento)
                     foto.delete()
                 except (FotoTratamiento.DoesNotExist, ValueError):
-                    pass
+                    continue
 
+        messages.success(self.request, 'Tratamiento actualizado correctamente.')
         return response
+
+    def form_invalid(self, form):
+        messages.error(self.request, 'No se pudo actualizar el tratamiento. Revisa los errores del formulario.')
+        _agregar_errores_formulario(self.request, form)
+        return super().form_invalid(form)
 
     def get_success_url(self):
         return reverse_lazy('detalle_paciente', kwargs={'pk': self.object.paciente.pk})
+
 
 class TratamientoDeleteView(LoginRequiredMixin, DeleteView):
     model = Tratamiento
     template_name = 'pacientes/eliminar_historial.html'
-    
+    http_method_names = ['get', 'post', 'head', 'options']
+
     def get_success_url(self):
         return reverse_lazy('detalle_paciente', kwargs={'pk': self.object.paciente.pk})
+
+    def delete(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        fecha = self.object.fecha.strftime('%d/%m/%Y %H:%M')
+        response = super().delete(request, *args, **kwargs)
+        messages.success(request, f'Tratamiento del {fecha} eliminado correctamente.')
+        return response

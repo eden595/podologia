@@ -1,31 +1,45 @@
-{% extends 'pacientes/base.html' %}
+﻿{% extends "pacientes/base.html" %}
+
+{% block page_title %}Eliminar Tratamiento{% endblock %}
+
+{% block topbar_search %}{% endblock %}
+
+{% block topbar_actions %}
+<a href="{% url 'detalle_paciente' object.paciente.pk %}" class="btn btn-outline">
+    <span class="material-symbols-outlined">arrow_back</span>
+    Volver a ficha
+</a>
+{% endblock %}
 
 {% block content %}
-<div class="row justify-content-center mt-5">
-    <div class="col-md-6">
-        <div class="card border-danger shadow-lg" style="background: #1e1e1e;">
-            <div class="card-header bg-danger text-white fw-bold">
-                ⚠️ Confirmar Eliminación
-            </div>
-            <div class="card-body text-white">
-                <h5 class="card-title mb-3">¿Estás seguro de borrar este tratamiento?</h5>
-                
-                <div class="p-3 rounded mb-4" style="background: rgba(255,255,255,0.05);">
-                    <p class="mb-1 text-white-50"><small>FECHA:</small> {{ object.fecha }}</p>
-                    <p class="mb-0 text-white-50"><small>PROCEDIMIENTO:</small> {{ object.procedimiento|truncatechars:50 }}</p>
-                </div>
-
-                <p class="small text-danger">Esta acción eliminará el registro, la firma y las fotos asociadas permanentemente.</p>
-                
-                <form method="post">
-                    {% csrf_token %}
-                    <div class="d-flex justify-content-end gap-2">
-                        <a href="{% url 'detalle_paciente' object.paciente.pk %}" class="btn btn-secondary rounded-pill">Cancelar</a>
-                        <button type="submit" class="btn btn-danger rounded-pill px-4">Sí, Eliminar</button>
-                    </div>
-                </form>
-            </div>
+<section class="panel confirm-card">
+    <div class="panel-head">
+        <div>
+            <h2 class="panel-title">Confirmar Eliminacion</h2>
+            <p class="panel-subtitle">Tratamiento del {{ object.fecha|date:"d M Y" }}</p>
         </div>
     </div>
-</div>
+
+    <div class="confirm-body">
+        <p style="font-size: 1.1rem; font-weight: 700; margin-bottom: 8px;">Deseas eliminar este tratamiento?</p>
+        <p style="color: var(--text-muted); line-height: 1.6; margin-bottom: 14px;">
+            Se eliminaran la descripcion, fotos adjuntas y firma del paciente asociadas a este registro.
+        </p>
+
+        <div class="detail-item" style="margin-bottom: 18px;">
+            <p class="detail-label">Procedimiento</p>
+            <p class="detail-value">{{ object.procedimiento|truncatechars:180 }}</p>
+        </div>
+
+        <form method="post" class="inline-actions" style="justify-content: flex-end;">
+            {% csrf_token %}
+            <a href="{% url 'detalle_paciente' object.paciente.pk %}" class="btn btn-outline">Cancelar</a>
+            <button type="submit" class="btn btn-danger">
+                <span class="material-symbols-outlined">delete</span>
+                Si, eliminar
+            </button>
+        </form>
+    </div>
+</section>
 {% endblock %}
+

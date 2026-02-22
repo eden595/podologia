@@ -1,140 +1,220 @@
-{% extends "pacientes/base.html" %}
+﻿{% extends "pacientes/base.html" %}
+
+{% block page_title %}Gestion de Pacientes{% endblock %}
+{% block page_subtitle %}Seguimiento clinico y fichas activas{% endblock %}
+
+{% block topbar_actions %}
+<a href="{% url 'administrar_pacientes' %}" class="btn btn-outline-light">
+    <span class="material-icons-round me-1">table_view</span>
+    Administrar pacientes
+</a>
+<a href="{% url 'crear_paciente' %}" class="btn btn-primary">
+    <span class="material-icons-round me-1">add</span>
+    Nuevo paciente
+</a>
+{% endblock %}
 
 {% block content %}
 <style>
-    .card-equal { 
-        height: 100%; 
-        display: flex; 
-        flex-direction: column; 
-        transition: transform 0.2s ease;
+    .hero-card {
+        position: relative;
+        overflow: hidden;
+        padding: 26px 28px;
+        min-height: 200px;
+        background: radial-gradient(280px 220px at 75% 20%, rgba(90, 211, 255, 0.45), transparent 60%),
+                    linear-gradient(145deg, rgba(33, 46, 92, 0.95), rgba(17, 24, 48, 0.95));
     }
-    .card-equal:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 10px 20px rgba(233, 30, 99, 0.2) !important;
+
+    .hero-card::after {
+        content: "";
+        position: absolute;
+        width: 240px;
+        height: 240px;
+        right: -60px;
+        top: -60px;
+        background: radial-gradient(circle, rgba(90, 211, 255, 0.4), transparent 70%);
+        filter: blur(2px);
     }
-    .avatar-circle {
-        width: 70px; 
-        height: 70px; 
-        background: linear-gradient(135deg, #333 0%, #222 100%);
-        border-radius: 50%; 
-        display:flex; 
-        align-items:center; 
-        justify-content:center;
-        border: 2px solid #e91e63;
-        margin: 0 auto 15px auto;
+
+    .summary-list {
+        display: grid;
+        gap: 12px;
     }
-    /* Estilo extra para los botones de acción */
-    .btn-action-group {
-        opacity: 0.7;
-        transition: opacity 0.3s;
+
+    .summary-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 12px 14px;
+        border-radius: 16px;
+        background: rgba(12, 18, 36, 0.85);
+        border: 1px solid rgba(108, 130, 255, 0.16);
     }
-    .card-equal:hover .btn-action-group {
-        opacity: 1;
+
+    .chart-card {
+        padding: 20px 22px;
+    }
+
+    .chart-wrap {
+        position: relative;
+        min-height: 290px;
+    }
+
+    .chart-empty {
+        min-height: 220px;
+        display: grid;
+        place-items: center;
+        color: var(--muted);
+    }
+
+    .chart-total {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 13px;
+        color: var(--muted);
     }
 </style>
 
-<div class="row align-items-center mb-5 gy-3">
-    <div class="col-lg-5">
-        <h2 class="fw-bold text-white mb-0">Gestión de Pacientes</h2>
-        <p class="text-secondary small mb-0">Administración clínica</p>
+<div class="content-grid">
+    <div class="grid-span-6 glass-card stat-card">
+        <div class="stat-label">Total pacientes</div>
+        <h3>{% if page_obj %}{{ page_obj.paginator.count }}{% else %}{{ pacientes|length }}{% endif %}</h3>
     </div>
-    
-    <div class="col-lg-4">
-        <form method="GET">
-            <div class="input-group shadow-sm">
-                <button type="submit" class="input-group-text border-secondary text-white" style="border-radius: 50px 0 0 50px !important; border-right: none !important; background-color: #2b2b2b; cursor: pointer; border: 1px solid #6c757d;">
-                    <span class="material-icons-round">search</span>
-                </button>
-                <input type="text" name="buscar" class="form-control border-secondary border-start-0 text-white" placeholder="Buscar por nombre o RUT..." value="{{ request.GET.buscar|default:'' }}" style="border-radius: 0 50px 50px 0 !important; background-color: #2b2b2b;">
-            </div>
-        </form>
+    <div class="grid-span-6 glass-card stat-card">
+        <div class="stat-label">Tratamientos ultimos 7 dias</div>
+        <h3>{{ tratamientos_7_dias }}</h3>
     </div>
 
-    <div class="col-lg-3 text-lg-end">
-        <a href="{% url 'crear_paciente' %}" class="btn btn-primary btn-oval-pro w-100 shadow-lg" style="background: linear-gradient(45deg, #e91e63, #c2185b); border: none;">
-            <span class="material-icons-round align-middle me-1">add</span> NUEVO PACIENTE
-        </a>
-    </div>
-</div>
-
-<div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4">
-    {% for p in pacientes %}
-    <div class="col">
-        <div class="card card-pro p-4 card-equal shadow" style="background-color: #1e1e1e; border: 1px solid #333;">
-            <div class="avatar-circle shadow">
-                <span class="material-icons-round" style="color:#fff; font-size: 32px;">person</span>
-            </div>
-            
-            <div class="text-center mb-3">
-                <h5 class="fw-bold text-white mb-1 text-truncate">{{ p.nombre }}</h5>
-                <span class="badge bg-dark border border-secondary text-secondary rounded-pill px-3">
-                    {{ p.rut|default:"Sin RUT" }}
-                </span>
-            </div>
-
-            <div class="mt-auto">
-                <a href="{% url 'detalle_paciente' p.pk %}" class="btn btn-outline-light btn-oval-pro w-100 btn-sm d-flex align-items-center justify-content-center gap-2 mb-2">
-                    VER FICHA <span class="material-icons-round" style="font-size: 16px;">arrow_forward</span>
-                </a>
-
-                <div class="d-flex gap-2 btn-action-group">
-                    <a href="{% url 'editar_paciente' p.pk %}" class="btn btn-outline-warning btn-sm w-50" title="Editar datos">
-                        <span class="material-icons-round" style="font-size: 16px;">edit</span>
-                    </a>
-                    <a href="{% url 'eliminar_paciente' p.pk %}" class="btn btn-outline-danger btn-sm w-50" title="Eliminar paciente">
-                        <span class="material-icons-round" style="font-size: 16px;">delete</span>
-                    </a>
-                </div>
+    <div class="grid-span-12 glass-card hero-card">
+        <div class="d-flex flex-column h-100 justify-content-center">
+            <div>
+                <p class="text-uppercase text-secondary small">Bienvenida</p>
+                <h2 class="fw-semibold mb-2">Hola, {{ user.username }}</h2>
+                <p class="text-secondary">Monitorea fichas, tratamientos y evoluciones desde un solo lugar.</p>
             </div>
         </div>
     </div>
-    {% empty %}
-    <div class="col-12 text-center py-5">
-        <span class="material-icons-round display-1 text-secondary opacity-25">search_off</span>
-        <h4 class="text-secondary mt-3">No se encontraron pacientes</h4>
+
+    <div class="grid-span-7 glass-card chart-card">
+        <div class="d-flex align-items-center justify-content-between mb-3">
+            <h5 class="mb-0">Distribucion de tratamientos</h5>
+            <span class="pill">Historico</span>
+        </div>
+        {% if tratamientos_chart_total %}
+            <div class="chart-wrap">
+                <canvas id="tratamientosChart"></canvas>
+            </div>
+            <div class="mt-2 chart-total">
+                <span class="material-icons-round" style="font-size: 16px;">monitoring</span>
+                {{ tratamientos_chart_total }} procedimientos registrados
+            </div>
+        {% else %}
+            <div class="chart-empty">
+                <div class="text-center">
+                    <span class="material-icons-round display-6 d-block mb-2">pie_chart</span>
+                    Aun no hay tratamientos para graficar.
+                </div>
+            </div>
+        {% endif %}
     </div>
-    {% endfor %}
+
+    <div class="grid-span-5 card-soft p-4">
+        <div class="d-flex align-items-center justify-content-between mb-3">
+            <h5 class="mb-0">Ultimos pacientes</h5>
+            <span class="pill">Historial reciente</span>
+        </div>
+        <div class="summary-list">
+            {% for p in ultimos_pacientes %}
+            <div class="summary-item">
+                <div>
+                    <div class="fw-semibold text-truncate">{{ p.nombre }}</div>
+                    <div class="text-secondary small">{{ p.rut|default:"Sin RUT" }}</div>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <span class="text-secondary small">#{{ p.pk }}</span>
+                    <a href="{% url 'detalle_paciente' p.pk %}" class="btn btn-outline-light btn-sm">Ver ficha</a>
+                </div>
+            </div>
+            {% empty %}
+            <div class="summary-item">
+                <div>
+                    <div class="fw-semibold">Sin pacientes aun</div>
+                    <div class="text-secondary small">Crea un nuevo paciente para comenzar</div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
 </div>
 
-{% if is_paginated %}
-<nav aria-label="Navegación de páginas" class="mt-5">
-    <ul class="pagination justify-content-center">
-        
-        {% if page_obj.has_previous %}
-            <li class="page-item">
-                <a class="page-link bg-dark text-white border-secondary" href="?page={{ page_obj.previous_page_number }}{% if termino_busqueda %}&buscar={{ termino_busqueda }}{% endif %}">
-                    <span class="material-icons-round align-middle" style="font-size: 18px;">arrow_back_ios</span>
-                </a>
-            </li>
-        {% else %}
-            <li class="page-item disabled">
-                <span class="page-link bg-dark text-muted border-secondary">
-                    <span class="material-icons-round align-middle" style="font-size: 18px;">arrow_back_ios</span>
-                </span>
-            </li>
-        {% endif %}
+{% if tratamientos_chart_total %}
+    {{ tratamientos_chart_labels|json_script:"chart-labels-dashboard" }}
+    {{ tratamientos_chart_values|json_script:"chart-values-dashboard" }}
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js"></script>
+    <script>
+        (function () {
+            var labelsEl = document.getElementById('chart-labels-dashboard');
+            var valuesEl = document.getElementById('chart-values-dashboard');
+            var canvas = document.getElementById('tratamientosChart');
 
-        <li class="page-item disabled">
-            <span class="page-link bg-dark text-white border-secondary fw-bold">
-                Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
-            </span>
-        </li>
+            if (!labelsEl || !valuesEl || !canvas) {
+                return;
+            }
 
-        {% if page_obj.has_next %}
-            <li class="page-item">
-                <a class="page-link bg-dark text-white border-secondary" href="?page={{ page_obj.next_page_number }}{% if termino_busqueda %}&buscar={{ termino_busqueda }}{% endif %}">
-                    <span class="material-icons-round align-middle" style="font-size: 18px;">arrow_forward_ios</span>
-                </a>
-            </li>
-        {% else %}
-            <li class="page-item disabled">
-                <span class="page-link bg-dark text-muted border-secondary">
-                    <span class="material-icons-round align-middle" style="font-size: 18px;">arrow_forward_ios</span>
-                </span>
-            </li>
-        {% endif %}
-        
-    </ul>
-</nav>
+            var labels = JSON.parse(labelsEl.textContent || '[]');
+            var values = JSON.parse(valuesEl.textContent || '[]');
+            if (!labels.length || !values.length) {
+                return;
+            }
+
+            var colors = [
+                '#5ad3ff',
+                '#6f7cff',
+                '#25f0ff',
+                '#63e6be',
+                '#f9c74f',
+                '#f9844a',
+                '#f94144'
+            ];
+
+            new Chart(canvas, {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: values,
+                        backgroundColor: colors.slice(0, values.length),
+                        borderColor: 'rgba(11, 16, 31, 0.95)',
+                        borderWidth: 2,
+                        hoverOffset: 8
+                    }]
+                },
+                options: {
+                    maintainAspectRatio: false,
+                    cutout: '56%',
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                color: '#dce8ff',
+                                padding: 14,
+                                usePointStyle: true,
+                                pointStyle: 'circle'
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(8, 14, 28, 0.95)',
+                            titleColor: '#f5f9ff',
+                            bodyColor: '#dce8ff',
+                            borderColor: 'rgba(90, 211, 255, 0.35)',
+                            borderWidth: 1
+                        }
+                    }
+                }
+            });
+        })();
+    </script>
 {% endif %}
 {% endblock %}

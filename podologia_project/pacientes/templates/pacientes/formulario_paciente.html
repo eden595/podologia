@@ -1,104 +1,92 @@
-{% extends "pacientes/base.html" %}
+﻿{% extends "pacientes/base.html" %}
+
+{% block page_title %}{% if form.instance.pk %}Editar Paciente{% else %}Nuevo Paciente{% endif %}{% endblock %}
+
+{% block topbar_search %}{% endblock %}
+
+{% block topbar_actions %}
+<a href="{% url 'lista_pacientes' %}" class="btn btn-outline">
+    <span class="material-symbols-outlined">arrow_back</span>
+    Volver al listado
+</a>
+{% endblock %}
 
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-lg-8">
-        <div class="card card-pro shadow-lg border-0">
-            <div class="card-header bg-transparent border-0 text-center pt-5 pb-0">
-                <div class="d-inline-flex align-items-center justify-content-center mb-3" 
-                     style="width: 60px; height: 60px; background: #333; border-radius: 50%;">
-                    <span class="material-icons-round text-white">{% if form.instance.pk %}edit{% else %}person_add{% endif %}</span>
+<section class="page-header">
+    <h1 class="page-title">{% if form.instance.pk %}Editar Paciente{% else %}Nuevo Paciente{% endif %}</h1>
+    <p class="page-description">Completa la ficha clinica con datos personales y antecedentes medicos.</p>
+</section>
+
+<section class="panel">
+    <div class="form-panel">
+        <form method="POST">
+            {% csrf_token %}
+
+            {% if form.errors %}
+            <div class="alert" style="margin-bottom: 16px;">
+                Revisa los campos marcados.
+                {% if form.non_field_errors %}
+                    <div style="margin-top: 8px;">{{ form.non_field_errors }}</div>
+                {% endif %}
+            </div>
+            {% endif %}
+
+            <div class="form-grid">
+                <div class="field">
+                    <label for="id_nombre">Nombre Completo</label>
+                    <input id="id_nombre" type="text" name="nombre" class="input" placeholder="Ej: Maria Soto" value="{{ form.nombre.value|default_if_none:'' }}" required>
+                    {% if form.nombre.errors %}<small class="text-danger">{{ form.nombre.errors|join:", " }}</small>{% endif %}
                 </div>
-                <h3 class="fw-bold text-white mb-0">
-                    {% if form.instance.pk %}Editar Paciente{% else %}Nuevo Paciente{% endif %}
-                </h3>
+                <div class="field">
+                    <label for="id_rut">RUT / DNI</label>
+                    <input id="id_rut" type="text" name="rut" class="input" placeholder="12.345.678-9" value="{{ form.rut.value|default_if_none:'' }}" required>
+                    {% if form.rut.errors %}<small class="text-danger">{{ form.rut.errors|join:", " }}</small>{% endif %}
+                </div>
+                <div class="field">
+                    <label for="id_telefono">Telefono</label>
+                    <input id="id_telefono" type="text" name="telefono" class="input" placeholder="+56 9 ..." value="{{ form.telefono.value|default_if_none:'' }}">
+                    {% if form.telefono.errors %}<small class="text-danger">{{ form.telefono.errors|join:", " }}</small>{% endif %}
+                </div>
+                <div class="field">
+                    <label for="id_direccion">Direccion</label>
+                    <input id="id_direccion" type="text" name="direccion" class="input" placeholder="Calle, numero, comuna" value="{{ form.direccion.value|default_if_none:'' }}">
+                    {% if form.direccion.errors %}<small class="text-danger">{{ form.direccion.errors|join:", " }}</small>{% endif %}
+                </div>
             </div>
-            
-            <div class="card-body p-5">
-                <form method="POST">
-                    {% csrf_token %}
-                    
-                    {% if form.errors %}
-                    <div class="alert alert-danger rounded-4 mb-4 text-center border-0">
-                        Por favor corrige los errores abajo.
-                        {{ form.non_field_errors }}
-                    </div>
-                    {% endif %}
-                    
-                    <h6 class="text-secondary text-uppercase fw-bold mb-4 small" style="letter-spacing: 1px;">Información Personal</h6>
-                    
-                    <div class="row g-3 mb-4">
-                        <div class="col-md-6">
-                            <label class="form-label text-white ms-3 small">Nombre Completo</label>
-                            <input type="text" name="nombre" class="form-control" placeholder="Ej: Juan Pérez" 
-                                   value="{{ form.instance.nombre|default_if_none:'' }}" required>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label text-white ms-3 small">RUT / DNI</label>
-                            <input type="text" name="rut" class="form-control" placeholder="12.345.678-9" 
-                                   value="{{ form.instance.rut|default_if_none:'' }}" required>
-                        </div>
-                        
-                        <div class="col-md-12">
-                            <label class="form-label text-white ms-3 small">Teléfono</label>
-                            <input type="tel" name="telefono" class="form-control" placeholder="+56 9..."
-                                   value="{{ form.instance.telefono|default_if_none:'' }}">
-                        </div>
 
-                        <div class="col-12">
-                            <label class="form-label text-white ms-3 small">Dirección Particular</label>
-                            <div class="input-group">
-                                <span class="input-group-text bg-dark border-secondary text-secondary" style="border-top-left-radius: 50px; border-bottom-left-radius: 50px;">
-                                    <span class="material-icons-round" style="font-size: 20px;">home</span>
-                                </span>
-                                <input type="text" name="direccion" class="form-control" placeholder="Calle, Número, Villa/Población, Comuna" 
-                                       value="{{ form.instance.direccion|default_if_none:'' }}" style="border-left: none;">
-                            </div>
-                        </div>
-                    </div>
-
-                    <h6 class="text-secondary text-uppercase fw-bold mb-4 small mt-5" style="letter-spacing: 1px;">Antecedentes Médicos</h6>
-
-                    <div class="row g-3 mb-4">
-                        <div class="col-md-6">
-                            <div class="p-3 rounded-5 border border-secondary d-flex align-items-center justify-content-between" style="background: #252525;">
-                                <label class="text-white mb-0" for="diabetes">¿Padece Diabetes?</label>
-                                <div class="form-check form-switch">
-                                    <input class="form-check-input" type="checkbox" name="diabetes" id="diabetes" style="width: 50px; height: 25px;"
-                                           {% if form.instance.diabetes %}checked{% endif %}>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="p-3 rounded-5 border border-secondary d-flex align-items-center justify-content-between" style="background: #252525;">
-                                <label class="text-white mb-0" for="hipertension">¿Hipertensión (HTA)?</label>
-                                <div class="form-check form-switch">
-                                    <input class="form-check-input" type="checkbox" name="hipertension" id="hipertension" style="width: 50px; height: 25px;"
-                                           {% if form.instance.hipertension %}checked{% endif %}>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label text-white ms-3 small">Alergias</label>
-                        <textarea name="alergias" class="form-control" rows="2" style="border-radius: 20px;" placeholder="Indique alergias a medicamentos o materiales...">{{ form.instance.alergias|default_if_none:'' }}</textarea>
-                    </div>
-
-                    <div class="mb-5">
-                        <label class="form-label text-white ms-3 small">Observaciones Generales</label>
-                        <textarea name="observaciones_medicas" class="form-control" rows="2" style="border-radius: 20px;" placeholder="Otras condiciones relevantes...">{{ form.instance.observaciones_medicas|default_if_none:'' }}</textarea>
-                    </div>
-
-                    <div class="d-grid gap-2 col-lg-8 mx-auto">
-                        <button type="submit" class="btn btn-primary btn-oval-pro py-3 shadow-lg" style="background: #e91e63; border:none;">
-                            {% if form.instance.pk %}ACTUALIZAR DATOS{% else %}GUARDAR PACIENTE{% endif %}
-                        </button>
-                        <a href="{% url 'lista_pacientes' %}" class="btn btn-outline-light btn-oval-pro py-2 border-0">Cancelar</a>
-                    </div>
-                </form>
+            <div class="section-space form-grid">
+                <div class="toggle-card">
+                    <label for="id_diabetes">Paciente con diabetes</label>
+                    <input id="id_diabetes" type="checkbox" name="diabetes" {% if form.diabetes.value %}checked{% endif %}>
+                </div>
+                <div class="toggle-card">
+                    <label for="id_hipertension">Paciente con hipertension</label>
+                    <input id="id_hipertension" type="checkbox" name="hipertension" {% if form.hipertension.value %}checked{% endif %}>
+                </div>
             </div>
-        </div>
+
+            <div class="section-space form-grid full">
+                <div class="field">
+                    <label for="id_alergias">Alergias</label>
+                    <textarea id="id_alergias" name="alergias" class="textarea" placeholder="Describe alergias relevantes...">{{ form.alergias.value|default_if_none:'' }}</textarea>
+                    {% if form.alergias.errors %}<small class="text-danger">{{ form.alergias.errors|join:", " }}</small>{% endif %}
+                </div>
+                <div class="field">
+                    <label for="id_observaciones_medicas">Observaciones Medicas</label>
+                    <textarea id="id_observaciones_medicas" name="observaciones_medicas" class="textarea" placeholder="Notas clinicas adicionales...">{{ form.observaciones_medicas.value|default_if_none:'' }}</textarea>
+                    {% if form.observaciones_medicas.errors %}<small class="text-danger">{{ form.observaciones_medicas.errors|join:", " }}</small>{% endif %}
+                </div>
+            </div>
+
+            <div class="section-space inline-actions">
+                <button type="submit" class="btn btn-primary">
+                    <span class="material-symbols-outlined">save</span>
+                    {% if form.instance.pk %}Actualizar Datos{% else %}Guardar Paciente{% endif %}
+                </button>
+                <a href="{% url 'lista_pacientes' %}" class="btn btn-outline">Cancelar</a>
+            </div>
+        </form>
     </div>
-</div>
+</section>
 {% endblock %}
+
