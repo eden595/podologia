@@ -97,11 +97,12 @@
                     <div class="mb-4">
                         <label class="form-label text-white ms-3 small">Fecha y Hora de Atencion</label>
                         <input
+                            id="id_fecha"
                             type="datetime-local"
                             name="fecha"
                             class="form-control"
                             style="border-radius: 20px;"
-                            value="{% if fecha_previo %}{{ fecha_previo }}{% else %}{% now 'Y-m-d\\TH:i' %}{% endif %}">
+                            value="{{ fecha_previo|default:'' }}">
                     </div>
 
                     <h6 class="text-secondary text-uppercase fw-bold mb-4 small" style="letter-spacing: 1px;">
@@ -259,6 +260,15 @@
             previewContainer.classList.add('d-none');
         }
     });
+
+    var fechaInput = document.getElementById('id_fecha');
+    if (fechaInput && !fechaInput.value) {
+        var ahora = new Date();
+        ahora.setSeconds(0, 0);
+        var tzOffset = ahora.getTimezoneOffset() * 60000;
+        var localISO = new Date(ahora.getTime() - tzOffset).toISOString().slice(0, 16);
+        fechaInput.value = localISO;
+    }
 
     var canvas = document.getElementById('signature-pad');
     var signaturePad = new SignaturePad(canvas, {

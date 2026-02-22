@@ -1,5 +1,5 @@
 from collections import Counter
-from datetime import timedelta
+from datetime import datetime, time, timedelta
 import re
 import unicodedata
 
@@ -118,6 +118,20 @@ def _agregar_errores_formulario(request, form):
             messages.error(request, f'{etiqueta}: {error}')
 
 
+def _inicio_dia_local(fecha_local):
+    return timezone.make_aware(datetime.combine(fecha_local, time.min), timezone.get_current_timezone())
+
+
+def _conteo_tratamientos_rango_fechas_local(fecha_inicio, fecha_fin_inclusiva):
+    inicio_dt = _inicio_dia_local(fecha_inicio)
+    fin_exclusivo_dt = _inicio_dia_local(fecha_fin_inclusiva + timedelta(days=1))
+    return Tratamiento.objects.filter(fecha__gte=inicio_dt, fecha__lt=fin_exclusivo_dt).count()
+
+
+def _conteo_tratamientos_dia_local(fecha_local):
+    return _conteo_tratamientos_rango_fechas_local(fecha_local, fecha_local)
+
+
 class DashboardView(LoginRequiredMixin, ListView):
     model = Paciente
     template_name = 'pacientes/lista_pacientes.html'
@@ -159,10 +173,7 @@ class DashboardView(LoginRequiredMixin, ListView):
         valores_chart = [cantidad for _, cantidad in top_procedimientos]
 
         context['ultimos_pacientes'] = Paciente.objects.order_by('-id')[:6]
-        context['tratamientos_7_dias'] = Tratamiento.objects.filter(
-            fecha__date__gte=inicio_7_dias,
-            fecha__date__lte=hoy,
-        ).count()
+        context['tratamientos_7_dias'] = _conteo_tratamientos_rango_fechas_local(inicio_7_dias, hoy)
         context['tratamientos_chart_labels'] = etiquetas_chart
         context['tratamientos_chart_values'] = valores_chart
         context['tratamientos_chart_total'] = sum(valores_chart)
@@ -224,7 +235,7 @@ class PacienteListView(LoginRequiredMixin, ListView):
         context['per_page_actual'] = per_page if per_page in {'10', '20', '50'} else str(self.paginate_by)
 
         context['total_pacientes'] = total_pacientes
-        context['atenciones_hoy'] = Tratamiento.objects.filter(fecha__date=hoy).count()
+        context['atenciones_hoy'] = _conteo_tratamientos_dia_local(hoy)
         context['en_tratamiento'] = en_tratamiento
         context['pacientes_sin_historial'] = max(total_pacientes - en_tratamiento, 0)
         return context
