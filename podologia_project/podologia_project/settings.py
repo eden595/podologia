@@ -1,50 +1,53 @@
 import os
 from pathlib import Path
 
+import environ
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-
-def _load_dotenv(dotenv_path: Path) -> None:
-    if not dotenv_path.exists():
-        return
-
-    for raw_line in dotenv_path.read_text(encoding="utf-8").splitlines():
-        line = raw_line.strip()
-        if not line or line.startswith("#") or "=" not in line:
-            continue
-
-        key, value = line.split("=", 1)
-        key = key.strip()
-        value = value.strip().strip('"').strip("'")
-        os.environ.setdefault(key, value)
-
-
-def _env_bool(name: str, default: bool = False) -> bool:
-    return os.getenv(name, str(default)).strip().lower() in {"1", "true", "yes", "on"}
-
-
-_load_dotenv(BASE_DIR / ".env")
-
-cloudinary_url = os.getenv("CLOUDINARY_URL", "").strip()
-if cloudinary_url:
-    os.environ["CLOUDINARY_URL"] = cloudinary_url
-
-use_cloudinary = _env_bool("USE_CLOUDINARY", bool(cloudinary_url))
-
-
-SECRET_KEY = os.getenv(
-    "DJANGO_SECRET_KEY",
-    "django-insecure-change-this-key-in-env",
+env = environ.Env(
+    DJANGO_DEBUG=(bool, False),
+    DJANGO_ALLOWED_HOSTS=(str, "127.0.0.1,localhost"),
+    DJANGO_CSRF_TRUSTED_ORIGINS=(str, ""),
+    USE_CLOUDINARY=(bool, False),
+    CLOUDINARY_SECURE=(bool, True),
+    DB_ENGINE=(str, "django.db.backends.mysql"),
+    DB_NAME=(str, "podologia"),
+    DB_USER=(str, "root"),
+    DB_PASSWORD=(str, ""),
+    DB_HOST=(str, "127.0.0.1"),
+    DB_PORT=(str, "3306"),
+    DB_CONN_MAX_AGE=(int, 60),
 )
 
-DEBUG = _env_bool("DJANGO_DEBUG", True)
+environ.Env.read_env(BASE_DIR / ".env")
+
+DEBUG = env.bool("DJANGO_DEBUG", default=False)
+
+_secret_fallback = "django-insecure-change-this-key-in-env"
+SECRET_KEY = env("DJANGO_SECRET_KEY", default=_secret_fallback)
+if not DEBUG and SECRET_KEY == _secret_fallback:
+    raise RuntimeError("Configura DJANGO_SECRET_KEY en el archivo .env")
 
 ALLOWED_HOSTS = [
     host.strip()
-    for host in os.getenv("DJANGO_ALLOWED_HOSTS", "127.0.0.1,localhost").split(",")
+    for host in env("DJANGO_ALLOWED_HOSTS", default="127.0.0.1,localhost").split(",")
     if host.strip()
 ]
+
+CSRF_TRUSTED_ORIGINS = [
+    origin.strip()
+    for origin in env("DJANGO_CSRF_TRUSTED_ORIGINS", default="").split(",")
+    if origin.strip()
+]
+
+cloudinary_url = env("CLOUDINARY_URL", default="").strip()
+if cloudinary_url:
+    os.environ["CLOUDINARY_URL"] = cloudinary_url
+
+use_cloudinary = env.bool("USE_CLOUDINARY", default=bool(cloudinary_url))
+if use_cloudinary and not cloudinary_url:
+    raise RuntimeError("USE_CLOUDINARY=True pero CLOUDINARY_URL esta vacio en .env")
 
 
 INSTALLED_APPS = [
@@ -65,6 +68,7 @@ if use_cloudinary:
         use_cloudinary = False
     else:
         INSTALLED_APPS = ["cloudinary_storage", "cloudinary", *INSTALLED_APPS]
+
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -97,25 +101,31 @@ TEMPLATES = [
 WSGI_APPLICATION = "podologia_project.wsgi.application"
 
 
-db_engine = os.getenv("DB_ENGINE", "django.db.backends.mysql").strip()
-if db_engine == "django.db.backends.sqlite3":
-    DATABASES = {
-        "default": {
-            "ENGINE": "django.db.backends.sqlite3",
-            "NAME": os.getenv("DB_NAME", str(BASE_DIR / "db.sqlite3")),
-        }
-    }
+database_url = env("DATABASE_URL", default="").strip()
+if database_url:
+    DATABASES = {"default": env.db("DATABASE_URL")}
 else:
-    DATABASES = {
-        "default": {
-            "ENGINE": db_engine,
-            "NAME": os.getenv("DB_NAME", "podologia"),
-            "USER": os.getenv("DB_USER", "root"),
-            "PASSWORD": os.getenv("DB_PASSWORD", ""),
-            "HOST": os.getenv("DB_HOST", "127.0.0.1"),
-            "PORT": os.getenv("DB_PORT", "3306"),
+    db_engine = env("DB_ENGINE", default="django.db.backends.mysql").strip()
+    if db_engine == "django.db.backends.sqlite3":
+        DATABASES = {
+            "default": {
+                "ENGINE": "django.db.backends.sqlite3",
+                "NAME": env("DB_NAME", default=str(BASE_DIR / "db.sqlite3")),
+            }
         }
-    }
+    else:
+        DATABASES = {
+            "default": {
+                "ENGINE": db_engine,
+                "NAME": env("DB_NAME", default="podologia"),
+                "USER": env("DB_USER", default="root"),
+                "PASSWORD": env("DB_PASSWORD", default=""),
+                "HOST": env("DB_HOST", default="127.0.0.1"),
+                "PORT": env("DB_PORT", default="3306"),
+            }
+        }
+
+DATABASES["default"]["CONN_MAX_AGE"] = env.int("DB_CONN_MAX_AGE", default=60)
 
 
 AUTH_PASSWORD_VALIDATORS = [
@@ -152,7 +162,7 @@ FILE_UPLOAD_MAX_MEMORY_SIZE = 52_428_800
 
 if use_cloudinary:
     CLOUDINARY_STORAGE = {
-        "SECURE": _env_bool("CLOUDINARY_SECURE", True),
+        "SECURE": env.bool("CLOUDINARY_SECURE", default=True),
     }
     STORAGES = {
         "default": {
