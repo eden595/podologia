@@ -9,6 +9,7 @@ env = environ.Env(
     DJANGO_DEBUG=(bool, False),
     DJANGO_ALLOWED_HOSTS=(str, "127.0.0.1,localhost"),
     DJANGO_CSRF_TRUSTED_ORIGINS=(str, ""),
+    DJANGO_SECURE_SSL_REDIRECT=(bool, False),
     USE_CLOUDINARY=(bool, False),
     CLOUDINARY_SECURE=(bool, True),
     DB_ENGINE=(str, "django.db.backends.mysql"),
@@ -25,7 +26,7 @@ environ.Env.read_env(BASE_DIR / ".env")
 DEBUG = env.bool("DJANGO_DEBUG", default=False)
 
 _secret_fallback = "django-insecure-change-this-key-in-env"
-SECRET_KEY = env("DJANGO_SECRET_KEY", default=_secret_fallback)
+SECRET_KEY = env("DJANGO_SECRET_KEY", default=env("SECRET_KEY", default=_secret_fallback))
 if not DEBUG and SECRET_KEY == _secret_fallback:
     raise RuntimeError("Configura DJANGO_SECRET_KEY en el archivo .env")
 
@@ -40,6 +41,15 @@ CSRF_TRUSTED_ORIGINS = [
     for origin in env("DJANGO_CSRF_TRUSTED_ORIGINS", default="").split(",")
     if origin.strip()
 ]
+
+render_hostname = env("RENDER_EXTERNAL_HOSTNAME", default="").strip()
+if render_hostname and render_hostname not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.append(render_hostname)
+
+if render_hostname:
+    render_origin = f"https://{render_hostname}"
+    if render_origin not in CSRF_TRUSTED_ORIGINS:
+        CSRF_TRUSTED_ORIGINS.append(render_origin)
 
 cloudinary_url = env("CLOUDINARY_URL", default="").strip()
 if cloudinary_url:
@@ -72,14 +82,13 @@ if use_cloudinary:
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    "django.middleware.security.SecurityMiddleware",
-    "whitenoise.middleware.WhiteNoiseMiddleware",
 ]
 
 ROOT_URLCONF = "podologia_project.urls"
@@ -143,8 +152,13 @@ TIME_ZONE = "America/Santiago"
 USE_I18N = True
 USE_TZ = True
 
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+USE_X_FORWARDED_HOST = True
+SECURE_SSL_REDIRECT = env.bool("DJANGO_SECURE_SSL_REDIRECT", default=not DEBUG)
+SESSION_COOKIE_SECURE = not DEBUG
+CSRF_COOKIE_SECURE = not DEBUG
 
-STATIC_URL = "static/"
+STATIC_URL = "/static/"
 _static_dir = BASE_DIR / "static"
 STATICFILES_DIRS = [_static_dir] if _static_dir.exists() else []
 STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
@@ -171,8 +185,8 @@ if use_cloudinary:
             "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
         },
         "staticfiles": {
-            "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage"
-        }
+            "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"
+        },
     }
 else:
     STORAGES = {
