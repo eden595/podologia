@@ -77,7 +77,7 @@ if use_cloudinary:
     except ImportError:
         use_cloudinary = False
     else:
-        INSTALLED_APPS = ["cloudinary_storage", "cloudinary", *INSTALLED_APPS]
+        INSTALLED_APPS = ["cloudinary", *INSTALLED_APPS]
 
 
 MIDDLEWARE = [
@@ -197,6 +197,5 @@ else:
             "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
         },
     }
-
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
