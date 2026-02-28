@@ -13,13 +13,13 @@
         {% endif %}
 
         <div class="field" style="margin-bottom: 12px;">
-            <label for="id_username">Usuario</label>
-            <input id="id_username" type="text" name="username" class="input" required autofocus>
+            <label for="id_username">Usuario o correo</label>
+            <input id="id_username" type="text" name="username" class="input" required autofocus autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false">
         </div>
 
         <div class="field" style="margin-bottom: 18px;">
             <label for="id_password">Contrasena</label>
-            <input id="id_password" type="password" name="password" class="input" required>
+            <input id="id_password" type="password" name="password" class="input" required autocomplete="current-password" autocapitalize="none" autocorrect="off" spellcheck="false">
         </div>
 
         <button type="submit" class="btn btn-primary btn-wide">

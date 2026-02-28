@@ -133,8 +133,13 @@
                         <section class="timeline-block timeline-procedure-panel timeline-panel-shell">
                             <p class="detail-label">Procedimiento</p>
                             <div class="timeline-procedure-box">
-                                <div class="timeline-procedure-value">{{ item.procedimiento|default:"Sin descripcion" }}</div>
+                                <div class="timeline-procedure-value">{{ item.procedimiento_mostrable }}</div>
                             </div>
+                            {% if item.notas_procedimiento %}
+                                <div class="timeline-procedure-note">
+                                    <strong>Nota clinica:</strong> {{ item.notas_procedimiento }}
+                                </div>
+                            {% endif %}
                         </section>
 
                         <section class="timeline-block timeline-media-panel timeline-panel-shell">

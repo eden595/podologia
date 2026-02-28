@@ -30,14 +30,25 @@
 
         * { box-sizing: border-box; }
 
+        html {
+            min-height: 100%;
+            background:
+                radial-gradient(1200px 800px at 15% -10%, #1b2760 0%, transparent 60%),
+                radial-gradient(1200px 800px at 90% 10%, #223b86 0%, transparent 60%),
+                linear-gradient(140deg, var(--bg-0), var(--bg-2));
+            background-color: var(--bg-0);
+        }
+
         body {
             background: radial-gradient(1200px 800px at 15% -10%, #1b2760 0%, transparent 60%),
                         radial-gradient(1200px 800px at 90% 10%, #223b86 0%, transparent 60%),
                         linear-gradient(140deg, var(--bg-0), var(--bg-2));
+            background-color: var(--bg-0);
             color: var(--text);
             font-family: "Manrope", "Sora", sans-serif;
             min-height: 100vh;
             margin: 0;
+            overflow-x: hidden;
         }
 
         a { text-decoration: none; color: inherit; }
@@ -120,6 +131,90 @@
             border-radius: 18px;
             background: rgba(20, 28, 51, 0.75);
             border: 1px solid rgba(108, 130, 255, 0.15);
+            display: grid;
+            gap: 14px;
+        }
+
+        .sidebar-status {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--text);
+        }
+
+        .sidebar-status .material-icons-round {
+            color: #dce8ff;
+        }
+
+        .sidebar-status-copy {
+            display: grid;
+            gap: 2px;
+            min-width: 0;
+        }
+
+        .sidebar-status-title {
+            font-size: 0.95rem;
+            font-weight: 600;
+            line-height: 1.2;
+        }
+
+        .sidebar-status-subtitle {
+            color: var(--muted);
+            font-size: 0.78rem;
+            line-height: 1.35;
+        }
+
+        .sidebar-user-row {
+            display: grid;
+            gap: 10px;
+        }
+
+        .sidebar-user-meta {
+            display: grid;
+            gap: 3px;
+            min-width: 0;
+        }
+
+        .sidebar-user-label {
+            color: rgba(168, 179, 209, 0.68);
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+
+        .sidebar-user-value {
+            color: rgba(232, 239, 255, 0.9);
+            font-size: 0.84rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .sidebar-logout-form {
+            margin: 0;
+        }
+
+        .sidebar-logout-btn {
+            width: 100%;
+            justify-content: center;
+            gap: 8px;
+            border-radius: 14px;
+            border: 1px solid rgba(112, 130, 255, 0.26);
+            background: rgba(10, 16, 34, 0.82);
+            color: var(--text);
+            padding: 10px 14px;
+            font-size: 0.88rem;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            transition: border-color 0.2s ease, background 0.2s ease, transform 0.2s ease;
+        }
+
+        .sidebar-logout-btn:hover {
+            border-color: rgba(90, 211, 255, 0.48);
+            background: rgba(17, 26, 50, 0.92);
+            color: #fff;
+            transform: translateY(-1px);
         }
 
         .main { padding: 30px 40px 50px; }
@@ -680,6 +775,20 @@
             line-height: 1.45;
             letter-spacing: 0.02em;
             white-space: pre-wrap;
+        }
+
+        .timeline-procedure-note {
+            padding: 10px 12px;
+            border-radius: 12px;
+            border: 1px solid rgba(112, 130, 255, 0.12);
+            background: rgba(14, 24, 44, 0.48);
+            color: rgba(174, 192, 232, 0.78);
+            font-size: 0.8rem;
+            line-height: 1.5;
+        }
+
+        .timeline-procedure-note strong {
+            color: #dce8ff;
         }
 
         .timeline-body-compact {
@@ -1282,15 +1391,24 @@
             </a>
 
             <div class="sidebar-footer mt-auto">
-                <div class="d-flex align-items-center gap-2 mb-2">
+                <div class="sidebar-status">
                     <span class="material-icons-round">verified</span>
-                    <span class="small">Sistema activo</span>
+                    <div class="sidebar-status-copy">
+                        <span class="sidebar-status-title">Sistema activo</span>
+                        <span class="sidebar-status-subtitle">Sesion iniciada y lista para trabajar</span>
+                    </div>
                 </div>
-                <div class="d-flex align-items-center justify-content-between">
-                    <span class="text-secondary" style="font-size: 12px;">{{ user.username }}</span>
-                    <form action="{% url 'logout' %}" method="post" class="m-0">
+                <div class="sidebar-user-row">
+                    <div class="sidebar-user-meta">
+                        <span class="sidebar-user-label">Usuario</span>
+                        <span class="sidebar-user-value">{{ user.email|default:user.username }}</span>
+                    </div>
+                    <form action="{% url 'logout' %}" method="post" class="sidebar-logout-form">
                         {% csrf_token %}
-                        <button type="submit" class="btn btn-sm btn-outline-light">Salir</button>
+                        <button type="submit" class="sidebar-logout-btn">
+                            <span class="material-icons-round">logout</span>
+                            Salir
+                        </button>
                     </form>
                 </div>
             </div>

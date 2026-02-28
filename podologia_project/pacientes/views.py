@@ -51,8 +51,10 @@ PROCEDIMIENTOS_ALIASES = {
     'DESBASTADO UNGUEAL': 'DEBASTADO UNGUEAL',
     'RESECADO DE HIPERQUERATOSIS': 'RESECADO DE HIPERQUERATOSIS',
     'RESECADO': 'RESECADO DE HIPERQUERATOSIS',
+    'RESECADO DE HIPERQUERATOSIS SIN FIRMA': 'RESECADO DE HIPERQUERATOSIS',
     'CURACION': 'CURACION',
     'ESPICULECTOMIA': 'ESPICULECTOMIA',
+    'DESPICULIZACION': 'ESPICULECTOMIA',
     'ORTONIXIA': 'ORTONIXIA',
     'LASER': 'LASER ONICOMICOSIS',
     'LASER ONICOMICOSIS': 'LASER ONICOMICOSIS',
@@ -147,6 +149,17 @@ def _construir_procedimiento_registrado(seleccionados, otros):
             return f'{procedimiento_final} | NOTAS: {otros}'
         return f'NOTAS: {otros}'
     return procedimiento_final
+
+
+def _resumen_procedimiento_mostrable(texto: str):
+    seleccionados, notas = _descomponer_procedimiento_registrado(texto)
+    procedimiento = ', '.join(seleccionados)
+
+    if procedimiento:
+        return procedimiento, notas
+    if notas:
+        return 'Sin procedimiento catalogado', notas
+    return 'Sin descripcion', ''
 
 
 def _seleccionar_procedimientos_desde_post(request):
@@ -295,19 +308,9 @@ class DashboardView(LoginRequiredMixin, ListView):
         conteo_procedimientos = Counter()
         procedimientos_registrados = Tratamiento.objects.values_list('procedimiento', flat=True)
         for procedimiento in procedimientos_registrados:
-            if not procedimiento:
-                continue
-
-            bloque_principal = procedimiento.split('|', 1)[0]
-            items = [item.strip() for item in bloque_principal.split(',') if item.strip()]
-
-            if items:
-                for item in items:
-                    etiqueta = _normalizar_etiqueta_procedimiento(item)
-                    if etiqueta:
-                        conteo_procedimientos[etiqueta] += 1
-            else:
-                conteo_procedimientos['OTROS / NOTAS'] += 1
+            seleccionados, _ = _descomponer_procedimiento_registrado(procedimiento)
+            for item in seleccionados:
+                conteo_procedimientos[item] += 1
 
         procedimientos_ordenados = conteo_procedimientos.most_common()
         etiquetas_chart = [nombre for nombre, _ in procedimientos_ordenados]
@@ -442,6 +445,7 @@ def detalle_paciente(request, pk):
         .order_by('-fecha')
     )
     for item in historial:
+        item.procedimiento_mostrable, item.notas_procedimiento = _resumen_procedimiento_mostrable(item.procedimiento)
         evidencias = []
         if item.foto:
             evidencias.append(

@@ -170,6 +170,9 @@ MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 LOGIN_URL = "login"
 LOGIN_REDIRECT_URL = "lista_pacientes"
 LOGOUT_REDIRECT_URL = "login"
+AUTHENTICATION_BACKENDS = [
+    "pacientes.auth_backends.CaseInsensitiveUsernameOrEmailBackend",
+]
 
 
 DATA_UPLOAD_MAX_MEMORY_SIZE = 52_428_800
