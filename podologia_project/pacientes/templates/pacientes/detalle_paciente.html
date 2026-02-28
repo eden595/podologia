@@ -1,4 +1,4 @@
-﻿{% extends "pacientes/base.html" %}
+{% extends "pacientes/base.html" %}
 
 {% block page_title %}Ficha Clinica{% endblock %}
 
@@ -83,52 +83,144 @@
     <div class="form-panel">
         <div class="timeline">
             {% for item in historial %}
-            <article class="timeline-item">
-                <div class="timeline-head">
-                    <div>
-                        <h3 class="timeline-title">Atencion Podologica</h3>
-                        <p class="timeline-meta">{{ item.fecha|date:"d M Y" }} - {{ item.fecha|date:"H:i" }} hrs</p>
-                    </div>
-                    <div class="inline-actions">
-                        <a href="{% url 'editar_historial' item.pk %}" class="icon-btn" title="Editar tratamiento">
-                            <span class="material-symbols-outlined">edit</span>
-                        </a>
-                        <a href="{% url 'eliminar_historial' item.pk %}" class="icon-btn danger" title="Eliminar tratamiento">
-                            <span class="material-symbols-outlined">delete</span>
-                        </a>
-                    </div>
-                </div>
-
-                <div class="timeline-text">{{ item.procedimiento|default:"Sin descripcion" }}</div>
-
-                <div class="section-space">
-                    <p class="detail-label">Evidencia Fotografica</p>
-                    <div class="media-grid">
-                        {% for foto_obj in item.fotos_tratamiento.all %}
-                            <a href="{{ foto_obj.imagen.url }}" target="_blank" class="media-thumb">
-                                <img src="{{ foto_obj.imagen.url }}" alt="Foto tratamiento">
-                            </a>
-                        {% empty %}
-                            {% if item.foto %}
-                                <a href="{{ item.foto.url }}" target="_blank" class="media-thumb">
-                                    <img src="{{ item.foto.url }}" alt="Foto principal">
-                                </a>
-                            {% else %}
-                                <span class="chip muted">Sin imagenes</span>
-                            {% endif %}
-                        {% endfor %}
-                    </div>
-                </div>
-
-                <div class="section-space">
-                    <p class="detail-label">Conformidad del Paciente</p>
-                    {% if item.firma %}
-                        <div class="signature-box">
-                            <img src="{{ item.firma }}" alt="Firma paciente">
+            <article class="timeline-item timeline-compact-card">
+                <div class="timeline-card-header">
+                    <div class="timeline-card-header-main">
+                        <div class="timeline-card-icon">
+                            <span class="material-symbols-outlined">medical_services</span>
                         </div>
-                    {% else %}
-                        <span class="chip muted">Sin firma</span>
-                    {% endif %}
+                        <div class="timeline-heading-copy">
+                            <h3 class="timeline-title">Atencion Podologica</h3>
+                            <p class="timeline-meta">{{ item.fecha|date:"d M Y" }} - {{ item.fecha|date:"H:i" }} hrs</p>
+                        </div>
+                    </div>
+
+                    <div class="timeline-card-tools">
+                        {% if item.total_evidencias %}
+                            <span class="timeline-info-pill">
+                                <span class="material-symbols-outlined">photo_library</span>
+                                {{ item.total_evidencias }} foto{{ item.total_evidencias|pluralize:"s" }}
+                            </span>
+                        {% else %}
+                            <span class="timeline-info-pill muted">
+                                <span class="material-symbols-outlined">image_not_supported</span>
+                                Sin imagenes
+                            </span>
+                        {% endif %}
+
+                        {% if item.firma %}
+                            <span class="timeline-info-pill success">
+                                <span class="material-symbols-outlined">verified</span>
+                                Firma registrada
+                            </span>
+                        {% endif %}
+
+                        <span class="timeline-tools-divider" aria-hidden="true"></span>
+
+                        <div class="inline-actions timeline-actions-compact">
+                            <a href="{% url 'editar_historial' item.pk %}" class="icon-btn" title="Editar tratamiento">
+                                <span class="material-symbols-outlined">edit</span>
+                            </a>
+                            <a href="{% url 'eliminar_historial' item.pk %}" class="icon-btn danger" title="Eliminar tratamiento">
+                                <span class="material-symbols-outlined">delete</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="timeline-card-body">
+                    <div class="timeline-body-compact">
+                        <section class="timeline-block timeline-procedure-panel timeline-panel-shell">
+                            <p class="detail-label">Procedimiento</p>
+                            <div class="timeline-procedure-box">
+                                <div class="timeline-procedure-value">{{ item.procedimiento|default:"Sin descripcion" }}</div>
+                            </div>
+                        </section>
+
+                        <section class="timeline-block timeline-media-panel timeline-panel-shell">
+                            <p class="detail-label">Evidencia Fotografica</p>
+
+                            {% if item.evidencias %}
+                                <div class="timeline-carousel {% if item.total_evidencias == 1 %}single-slide{% endif %}" data-carousel>
+                                    <div class="timeline-carousel-viewport">
+                                        <div class="timeline-carousel-track" data-carousel-track>
+                                            {% for evidencia in item.evidencias %}
+                                                <a href="{{ evidencia.url }}" target="_blank" class="timeline-carousel-slide" data-carousel-slide>
+                                                    <img src="{{ evidencia.url }}" alt="{{ evidencia.label }}">
+                                                    <span class="timeline-carousel-badge">Foto {{ forloop.counter }}/{{ item.total_evidencias }}</span>
+                                                </a>
+                                            {% endfor %}
+                                        </div>
+
+                                        {% if item.total_evidencias > 1 %}
+                                            <div class="timeline-carousel-nav">
+                                                <button type="button" class="timeline-carousel-btn timeline-carousel-btn-overlay" data-carousel-prev aria-label="Foto anterior">
+                                                    <span class="material-symbols-outlined">chevron_left</span>
+                                                </button>
+                                                <button type="button" class="timeline-carousel-btn timeline-carousel-btn-overlay" data-carousel-next aria-label="Foto siguiente">
+                                                    <span class="material-symbols-outlined">chevron_right</span>
+                                                </button>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+
+                                    {% if item.total_evidencias > 1 %}
+                                        <div class="timeline-carousel-dots">
+                                            {% for evidencia in item.evidencias %}
+                                                <button
+                                                    type="button"
+                                                    class="timeline-carousel-dot{% if forloop.first %} active{% endif %}"
+                                                    data-carousel-dot="{{ forloop.counter0 }}"
+                                                    aria-label="Ir a la foto {{ forloop.counter }}"
+                                                    {% if forloop.first %}aria-current="true"{% else %}aria-current="false"{% endif %}
+                                                ></button>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            {% else %}
+                                <a href="{% url 'editar_historial' item.pk %}" class="timeline-empty-media">
+                                    <span class="material-symbols-outlined timeline-empty-media-icon">add_a_photo</span>
+                                    <strong class="timeline-empty-media-title">Haz clic para agregar fotos</strong>
+                                    <span class="timeline-empty-media-copy">Puedes subir varias imagenes para este procedimiento.</span>
+                                </a>
+                            {% endif %}
+                        </section>
+
+                        <aside class="timeline-block timeline-signature-panel timeline-panel-shell">
+                            <p class="detail-label">Conformidad</p>
+
+                            {% if item.firma %}
+                                <div class="signature-box signature-box-compact">
+                                    <img src="{{ item.firma }}" alt="Firma paciente">
+                                </div>
+                            {% else %}
+                                <div class="signature-box signature-box-compact signature-box-empty">
+                                    <span class="chip muted">Sin firma</span>
+                                </div>
+                            {% endif %}
+                        </aside>
+                    </div>
+
+                    <div class="timeline-foot-note">
+                        <div class="timeline-consent-note">
+                            El paciente declara haber sido informado sobre los tratamientos podologicos, riesgos y cuidados vinculados a este procedimiento.
+                        </div>
+                    </div>
+
+                    <div class="timeline-record-footer">
+                        <div class="timeline-record-meta">
+                            <span class="timeline-record-chip">
+                                <span class="material-symbols-outlined">person</span>
+                                {{ paciente.nombre }}
+                            </span>
+                            <span class="timeline-record-chip">
+                                <span class="material-symbols-outlined">badge</span>
+                                {{ paciente.rut|default:"Sin RUT" }}
+                            </span>
+                        </div>
+                        <a href="{% url 'editar_historial' item.pk %}" class="timeline-record-link">Editar registro</a>
+                    </div>
                 </div>
             </article>
             {% empty %}
@@ -162,3 +254,63 @@
 {% endif %}
 {% endblock %}
 
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        document.querySelectorAll('[data-carousel]').forEach(function (carousel) {
+            const track = carousel.querySelector('[data-carousel-track]');
+            const slides = Array.from(carousel.querySelectorAll('[data-carousel-slide]'));
+            const prev = carousel.querySelector('[data-carousel-prev]');
+            const next = carousel.querySelector('[data-carousel-next]');
+            const dots = Array.from(carousel.querySelectorAll('[data-carousel-dot]'));
+
+            if (!track || slides.length <= 1) {
+                return;
+            }
+
+            let currentIndex = 0;
+
+            function updateCarousel() {
+                track.style.transform = `translateX(-${currentIndex * 100}%)`;
+
+                if (prev) {
+                    prev.disabled = currentIndex === 0;
+                }
+
+                if (next) {
+                    next.disabled = currentIndex === slides.length - 1;
+                }
+
+                dots.forEach(function (dot, index) {
+                    const isActive = index === currentIndex;
+                    dot.classList.toggle('active', isActive);
+                    dot.setAttribute('aria-current', isActive ? 'true' : 'false');
+                });
+            }
+
+            if (prev) {
+                prev.addEventListener('click', function () {
+                    currentIndex = Math.max(0, currentIndex - 1);
+                    updateCarousel();
+                });
+            }
+
+            if (next) {
+                next.addEventListener('click', function () {
+                    currentIndex = Math.min(slides.length - 1, currentIndex + 1);
+                    updateCarousel();
+                });
+            }
+
+            dots.forEach(function (dot, index) {
+                dot.addEventListener('click', function () {
+                    currentIndex = index;
+                    updateCarousel();
+                });
+            });
+
+            updateCarousel();
+        });
+    });
+</script>
+{% endblock %}

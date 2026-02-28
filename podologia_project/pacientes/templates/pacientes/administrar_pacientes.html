@@ -228,29 +228,6 @@
         background: rgba(220, 53, 69, 0.12);
     }
 
-    .status-pill {
-        display: inline-flex;
-        align-items: center;
-        padding: 5px 10px;
-        border-radius: 999px;
-        font-size: 12px;
-        font-weight: 600;
-        border: 1px solid rgba(112, 130, 255, 0.24);
-        background: rgba(20, 28, 51, 0.78);
-        margin-right: 6px;
-        margin-bottom: 4px;
-    }
-
-    .status-pill.ok {
-        border-color: rgba(40, 167, 69, 0.4);
-        background: rgba(40, 167, 69, 0.14);
-    }
-
-    .status-pill.warn {
-        border-color: rgba(255, 193, 7, 0.4);
-        background: rgba(255, 193, 7, 0.14);
-    }
-
     .actions {
         display: flex;
         justify-content: flex-end;
@@ -339,15 +316,6 @@
                 </select>
             </div>
 
-            <div class="toolbar-field">
-                <label for="estadoFiltro">Estado</label>
-                <select name="estado" id="estadoFiltro" class="toolbar-select" data-autosubmit="true">
-                    <option value="" {% if not estado_actual %}selected{% endif %}>Todos</option>
-                    <option value="con_historial" {% if estado_actual == 'con_historial' %}selected{% endif %}>Con historial</option>
-                    <option value="sin_historial" {% if estado_actual == 'sin_historial' %}selected{% endif %}>Sin historial</option>
-                </select>
-            </div>
-
             {% if buscar_actual %}
                 <input type="hidden" name="buscar" value="{{ buscar_actual }}">
             {% endif %}
@@ -357,14 +325,11 @@
             <form method="GET" class="toolbar-search">
                 <span class="material-icons-round search-mark">search</span>
                 <input type="text" name="buscar" value="{{ buscar_actual }}" placeholder="Buscar por nombre o RUT">
-                {% if estado_actual %}
-                    <input type="hidden" name="estado" value="{{ estado_actual }}">
-                {% endif %}
                 <input type="hidden" name="per_page" value="{{ per_page_actual }}">
                 <button type="submit" class="btn-search">Buscar</button>
             </form>
 
-            {% if buscar_actual or estado_actual or per_page_actual != '10' %}
+            {% if buscar_actual or per_page_actual != '10' %}
                 <a href="{% url 'administrar_pacientes' %}" class="btn btn-outline-light btn-sm btn-clear">
                     Limpiar filtros
                 </a>
@@ -381,7 +346,7 @@
                     <th>Telefono</th>
                     <th>Condiciones</th>
                     <th>Ultima atencion</th>
-                    <th>Estado</th>
+                    <th>Procedimientos</th>
                     <th style="text-align: right;">Acciones</th>
                 </tr>
             </thead>
@@ -425,19 +390,12 @@
                         {% endwith %}
                     </td>
                     <td>
-                        {% if p.tratamientos_ordenados %}
-                            <span class="status-pill ok">En tratamiento</span>
-                        {% else %}
-                            <span class="status-pill">Ficha nueva</span>
-                        {% endif %}
-                        {% if p.diabetes or p.hipertension %}
-                            <span class="status-pill warn">Seguimiento</span>
-                        {% endif %}
+                        <span class="chip-soft">{{ p.total_procedimientos_realizados }} procedimiento(s)</span>
                     </td>
                     <td>
                         <div class="actions">
                             <a href="{% url 'editar_paciente' p.pk %}" class="btn btn-action btn-edit">Editar ficha</a>
-                            <a href="{% url 'registrar_tratamiento' p.pk %}" class="btn btn-action btn-treatment">Tratamiento</a>
+                            <a href="{% url 'registrar_tratamiento' p.pk %}" class="btn btn-action btn-treatment">Nuevo tratamiento</a>
                             <a href="{% url 'detalle_paciente' p.pk %}" class="btn btn-action btn-view">Ver ficha</a>
                         </div>
                     </td>
@@ -467,7 +425,7 @@
             <ul class="pagination m-0">
                 {% if page_obj.has_previous %}
                     <li class="page-item">
-                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if buscar_actual %}&buscar={{ buscar_actual|urlencode }}{% endif %}{% if estado_actual %}&estado={{ estado_actual|urlencode }}{% endif %}{% if per_page_actual %}&per_page={{ per_page_actual }}{% endif %}">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if buscar_actual %}&buscar={{ buscar_actual|urlencode }}{% endif %}{% if per_page_actual %}&per_page={{ per_page_actual }}{% endif %}">
                             <span class="material-icons-round" style="font-size: 18px;">arrow_back_ios</span>
                         </a>
                     </li>
@@ -485,7 +443,7 @@
 
                 {% if page_obj.has_next %}
                     <li class="page-item">
-                        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if buscar_actual %}&buscar={{ buscar_actual|urlencode }}{% endif %}{% if estado_actual %}&estado={{ estado_actual|urlencode }}{% endif %}{% if per_page_actual %}&per_page={{ per_page_actual }}{% endif %}">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if buscar_actual %}&buscar={{ buscar_actual|urlencode }}{% endif %}{% if per_page_actual %}&per_page={{ per_page_actual }}{% endif %}">
                             <span class="material-icons-round" style="font-size: 18px;">arrow_forward_ios</span>
                         </a>
                     </li>

@@ -1,159 +1,393 @@
-﻿{% extends "pacientes/base.html" %}
+{% extends "pacientes/base.html" %}
 
 {% block page_title %}Editar Tratamiento{% endblock %}
-
+{% block page_subtitle %}Actualiza la informacion del procedimiento y registros visuales.{% endblock %}
 {% block topbar_search %}{% endblock %}
-
-{% block topbar_actions %}
-<a href="{% url 'detalle_paciente' object.paciente.pk %}" class="btn btn-outline">
-    <span class="material-symbols-outlined">arrow_back</span>
-    Volver a ficha
-</a>
-{% endblock %}
+{% block topbar_actions %}{% endblock %}
 
 {% block content %}
-<section class="page-header">
-    <h1 class="page-title">Editar Tratamiento</h1>
-    <p class="page-description">Paciente: <strong>{{ object.paciente.nombre }}</strong></p>
-</section>
+<style>
+    .topbar { display: none; }
+    .edit-shell,.edit-form,.edit-card-body,.edit-field,.edit-signature-current,.edit-signature-new{display:grid}
+    .edit-shell{gap:28px}
+    .edit-hero{display:flex;justify-content:space-between;align-items:flex-start;gap:24px}
+    .edit-hero-copy{display:grid;gap:10px}
+    .edit-back-link{display:inline-flex;align-items:center;gap:8px;width:fit-content;color:rgba(174,192,232,.78);text-decoration:none;font-size:.94rem}
+    .edit-back-link:hover,.edit-photo-action:hover{color:#fff}
+    .edit-hero-copy h1{margin:0;font-family:"Sora",sans-serif;font-size:clamp(2.35rem,4vw,3.15rem);font-weight:600;line-height:1.02;letter-spacing:-.04em}
+    .edit-hero-copy p{margin:0;color:rgba(174,192,232,.72);font-size:1.02rem}
+    .edit-patient-summary{display:grid;gap:6px;justify-items:end;padding-top:8px}
+    .edit-patient-label,.edit-field label,.edit-section-label{color:rgba(174,192,232,.76);text-transform:uppercase;letter-spacing:.12em;font-size:.81rem;font-weight:700}
+    .edit-patient-name{color:#7fb7ff;font-size:clamp(1.5rem,2.8vw,2.15rem);font-weight:500;text-align:right;line-height:1.08}
+    .edit-form{gap:28px}
+    .edit-grid-top{display:grid;grid-template-columns:minmax(0,1.02fr) minmax(0,.98fr);gap:28px;align-items:start}
+    .edit-card{overflow:hidden;border-radius:24px}
+    .edit-card-head{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:24px 26px 18px;border-bottom:1px solid rgba(112,130,255,.14)}
+    .edit-card-title-group{display:flex;align-items:center;gap:14px;min-width:0}
+    .edit-card-icon{width:44px;height:44px;border-radius:14px;display:grid;place-items:center;flex-shrink:0;color:#7cb5ff;background:rgba(53,91,166,.22);border:1px solid rgba(112,130,255,.14)}
+    .edit-card-icon .material-symbols-outlined{font-size:1.4rem}
+    .edit-card-title{margin:0;font-family:"Sora",sans-serif;font-size:1.12rem;font-weight:600}
+    .edit-card-subtitle{margin:4px 0 0;color:rgba(174,192,232,.62);font-size:.88rem}
+    .edit-card-body{gap:18px;padding:20px 26px 26px}
+    .edit-field{gap:10px}
+    .edit-field-head,.edit-signature-head,.edit-photo-footer-top,.edit-photo-toolbar,.edit-actions{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+    .edit-optional-chip{display:inline-flex;align-items:center;padding:6px 10px;border-radius:999px;border:1px solid rgba(101,224,191,.22);background:rgba(14,74,74,.28);color:#67dfc2;font-size:.74rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
+    .edit-datetime-row{display:flex;gap:10px;align-items:stretch}
+    .edit-datetime-row .input{flex:1;min-width:0}
+    .edit-reset-btn{border:1px solid rgba(112,130,255,.24);background:rgba(10,17,34,.92);color:rgba(224,232,255,.84);border-radius:16px;padding:0 16px;font-size:.88rem;font-weight:600}
+    .edit-reset-btn:hover{border-color:rgba(111,183,255,.4)}
+    .edit-field-hint,.edit-status-note,.edit-photo-note{margin:0;color:rgba(174,192,232,.6);font-size:.84rem;line-height:1.5}
+    .edit-field-hint strong{color:rgba(236,242,255,.88)}
+    .edit-procedure-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+    .edit-procedure-option{position:relative;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 18px;border-radius:18px;border:1px solid rgba(112,130,255,.18);background:rgba(10,18,36,.78);color:#f1f6ff;cursor:pointer;transition:border-color .18s ease, transform .18s ease, box-shadow .18s ease}
+    .edit-procedure-option:hover{transform:translateY(-1px);border-color:rgba(111,183,255,.34)}
+    .edit-procedure-option input{position:absolute;inset:0;opacity:0;cursor:pointer}
+    .edit-procedure-option-title{font-size:.92rem;font-weight:600;line-height:1.35}
+    .edit-procedure-option-mark{width:28px;height:28px;border-radius:999px;border:1px solid rgba(112,130,255,.24);display:grid;place-items:center;flex-shrink:0;color:transparent;background:rgba(14,21,40,.92)}
+    .edit-procedure-option:has(input:checked){border-color:rgba(111,183,255,.52);background:linear-gradient(180deg,rgba(19,34,66,.95),rgba(15,28,54,.9));box-shadow:0 0 0 1px rgba(111,183,255,.14)}
+    .edit-procedure-option:has(input:checked) .edit-procedure-option-mark{color:#fff;border-color:rgba(111,183,255,.45);background:linear-gradient(135deg,#72b7ff,#5b90ff)}
+    .edit-note-textarea{min-height:118px;resize:vertical;line-height:1.52}
+    .edit-photo-action{display:inline-flex;align-items:center;gap:8px;border:0;background:transparent;color:rgba(229,236,255,.9);cursor:pointer;font-size:.94rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;text-decoration:none;padding:0}
+    .edit-photo-input{display:none}
+    .edit-photo-strip{display:flex;gap:16px;overflow-x:auto;padding-bottom:4px;scrollbar-width:thin;scrollbar-color:rgba(111,183,255,.44) transparent}
+    .edit-photo-strip::-webkit-scrollbar{height:7px}
+    .edit-photo-strip::-webkit-scrollbar-thumb{background:rgba(111,183,255,.44);border-radius:999px}
+    .edit-photo-card{position:relative;flex:0 0 190px;min-width:190px}
+    .edit-photo-card-frame{position:relative;display:block;width:100%;aspect-ratio:.88/1;border-radius:16px;overflow:hidden;border:1px solid rgba(112,130,255,.18);background:linear-gradient(180deg,rgba(7,14,28,.96),rgba(13,24,47,.88))}
+    .edit-photo-card-frame img{width:100%;height:100%;object-fit:cover;display:block}
+    .edit-photo-card-frame::after{content:"";position:absolute;left:0;right:0;bottom:0;height:40%;background:linear-gradient(180deg,transparent,rgba(6,10,20,.56))}
+    .edit-photo-card-caption{position:absolute;left:12px;bottom:12px;z-index:2;display:inline-flex;align-items:center;padding:5px 10px;border-radius:999px;background:rgba(11,17,31,.8);border:1px solid rgba(112,130,255,.18);color:#f3f7ff;font-size:.75rem;font-weight:600}
+    .edit-photo-delete-btn{position:absolute;top:12px;right:12px;z-index:2;width:34px;height:34px;border-radius:11px;display:grid;place-items:center;border:1px solid rgba(255,101,129,.2);background:rgba(14,21,40,.82);color:#ff7992;cursor:pointer;padding:0}
+    .edit-photo-delete-btn:hover{background:rgba(91,25,43,.88);border-color:rgba(255,101,129,.48)}
+    .edit-photo-delete-btn[disabled]{opacity:.55;cursor:wait}
+    .edit-photo-empty{flex:1 1 auto;min-height:228px;border-radius:18px;border:1px dashed rgba(112,130,255,.22);background:linear-gradient(180deg,rgba(12,18,36,.74),rgba(12,21,42,.48));display:grid;place-items:center;padding:22px;text-align:center;color:rgba(174,192,232,.72)}
+    .edit-signature-grid{display:grid;grid-template-columns:320px minmax(0,1fr);gap:28px;align-items:start}
+    .edit-signature-current,.edit-signature-new{gap:12px}
+    .edit-signature-preview-box{min-height:160px;border-radius:16px;border:1px solid rgba(112,130,255,.18);background:linear-gradient(180deg,rgba(10,20,42,.96),rgba(9,17,34,.92));display:grid;place-items:center;padding:16px}
+    .edit-signature-preview-box img{width:100%;max-height:118px;object-fit:contain;display:block}
+    .edit-signature-empty{color:rgba(174,192,232,.72);font-size:.9rem}
+    .edit-signature-clear{display:inline-flex;align-items:center;gap:8px;color:#ff617d;font-size:.86rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;background:transparent;border:0;padding:0;cursor:pointer}
+    .edit-signature-pad-shell{position:relative;min-height:160px;border-radius:16px;border:1px dashed rgba(112,130,255,.24);background:linear-gradient(180deg,rgba(14,21,40,.66),rgba(14,21,40,.66)),repeating-linear-gradient(to bottom,transparent 0,transparent 31px,rgba(134,151,197,.12) 31px,rgba(134,151,197,.12) 32px);overflow:hidden}
+    .edit-signature-hint{position:absolute;inset:0;display:grid;place-items:center;padding:18px;text-align:center;color:rgba(174,192,232,.2);font-size:1rem;pointer-events:none}
+    .edit-signature-canvas{width:100%;height:160px;display:block;background:transparent}
+    .edit-actions{justify-content:flex-end}
+    .edit-cancel-link{color:#eef4ff;text-decoration:none;font-weight:600;padding:10px 14px}
+    .edit-submit-btn{min-width:250px;justify-content:center;border-radius:16px;padding:14px 18px}
+    .edit-error{color:#ff7d97;font-size:.82rem}
+    @media (max-width:1200px){.edit-grid-top,.edit-signature-grid{grid-template-columns:minmax(0,1fr)}}
+    @media (max-width:900px){.edit-hero{flex-direction:column}.edit-patient-summary{justify-items:start;padding-top:0}.edit-patient-name{text-align:left}.edit-card-head,.edit-card-body{padding-left:20px;padding-right:20px}.edit-procedure-grid{grid-template-columns:minmax(0,1fr)}}
+    @media (max-width:640px){.edit-shell,.edit-form{gap:22px}.edit-card-head,.edit-card-body{padding-left:16px;padding-right:16px}.edit-datetime-row,.edit-actions{flex-direction:column;align-items:stretch}.edit-photo-card{flex-basis:170px;min-width:170px}.edit-submit-btn{width:100%;min-width:0}}
+</style>
 
-<form method="POST" enctype="multipart/form-data" id="editForm" class="timeline" novalidate>
-    {% csrf_token %}
-    {% if form.errors %}
-    <section class="panel">
-        <div class="form-panel">
-            <div class="alert">
-                Revisa los errores del formulario.
-                {% if form.non_field_errors %}
+<section class="edit-shell">
+    <header class="edit-hero">
+        <div class="edit-hero-copy">
+            <a href="{% url 'detalle_paciente' object.paciente.pk %}" class="edit-back-link">
+                <span class="material-symbols-outlined">arrow_back</span>
+                Volver a ficha
+            </a>
+            <h1>Editar Tratamiento</h1>
+            <p>Actualiza la informacion del procedimiento y registros visuales.</p>
+        </div>
+        <div class="edit-patient-summary">
+            <span class="edit-patient-label">Paciente</span>
+            <span class="edit-patient-name">{{ object.paciente.nombre }}</span>
+        </div>
+    </header>
+
+    <form method="POST" enctype="multipart/form-data" id="editForm" class="edit-form" novalidate>
+        {% csrf_token %}
+        <input type="hidden" name="nuevas_fotos_extra_directas" id="nuevas_fotos_extra_directas">
+
+        {% if form.errors %}
+        <section class="panel">
+            <div class="form-panel">
+                <div class="alert">
+                    Revisa los errores del formulario.
+                    {% if form.non_field_errors %}
                     <div style="margin-top: 8px;">{{ form.non_field_errors }}</div>
-                {% endif %}
-            </div>
-        </div>
-    </section>
-    {% endif %}
-
-    <section class="panel">
-        <div class="panel-head">
-            <div>
-                <h2 class="panel-title">Datos del Procedimiento</h2>
-                <p class="panel-subtitle">Actualiza fecha, descripcion y foto principal</p>
-            </div>
-        </div>
-
-        <div class="form-panel form-grid">
-            <div class="field">
-                <label for="id_fecha">Fecha y Hora</label>
-                {% with fecha_val=form.fecha.value %}
-                <input id="id_fecha" type="datetime-local" name="fecha" class="input" value="{% if fecha_val %}{{ fecha_val }}{% else %}{{ object.fecha|date:'Y-m-d\\TH:i' }}{% endif %}">
-                {% endwith %}
-                {% if form.fecha.errors %}<small class="text-danger">{{ form.fecha.errors|join:", " }}</small>{% endif %}
-            </div>
-
-            <div class="field">
-                <label for="id_foto">Foto principal (opcional)</label>
-                <input id="id_foto" type="file" name="foto" class="input" accept="image/*">
-                {% if form.foto.errors %}<small class="text-danger">{{ form.foto.errors|join:", " }}</small>{% endif %}
-            </div>
-
-            <div class="field" style="grid-column: 1 / -1;">
-                <label for="id_procedimiento">Descripcion</label>
-                <textarea id="id_procedimiento" name="procedimiento" class="textarea" rows="4">{{ form.procedimiento.value|default:object.procedimiento }}</textarea>
-                {% if form.procedimiento.errors %}<small class="text-danger">{{ form.procedimiento.errors|join:", " }}</small>{% endif %}
-            </div>
-        </div>
-    </section>
-
-    <section class="panel">
-        <div class="panel-head">
-            <div>
-                <h2 class="panel-title">Gestion de Fotografias</h2>
-                <p class="panel-subtitle">Borra las existentes o agrega nuevas</p>
-            </div>
-        </div>
-
-        <div class="form-panel">
-            <div>
-                <p class="detail-label" style="margin-bottom: 10px;">Fotos actuales</p>
-                {% if object.fotos_tratamiento.all %}
-                <div class="media-grid">
-                    {% for foto in object.fotos_tratamiento.all %}
-                    <label class="media-thumb" style="position: relative; cursor: pointer;">
-                        <img src="{{ foto.imagen.url }}" alt="Foto existente">
-                        <input type="checkbox" name="borrar_foto_{{ foto.id }}" style="position: absolute; right: 7px; top: 7px; width: 18px; height: 18px; accent-color: #ff4f7b;">
-                    </label>
-                    {% endfor %}
+                    {% endif %}
                 </div>
-                {% else %}
-                    <span class="chip muted">Sin fotos extra para este tratamiento.</span>
-                {% endif %}
             </div>
+        </section>
+        {% endif %}
 
-            <div class="section-space upload-box">
-                <input type="file" id="actual-btn" name="nuevas_fotos_extra" class="hidden-input" multiple accept="image/*">
-                <label for="actual-btn" class="btn btn-primary" style="cursor: pointer;">
-                    <span class="material-symbols-outlined">add_photo_alternate</span>
-                    Agregar Fotos Nuevas
-                </label>
-                <p id="file-chosen" class="file-note">Ningun archivo nuevo seleccionado</p>
-            </div>
-        </div>
-    </section>
-
-    <section class="panel">
-        <div class="panel-head">
-            <div>
-                <h2 class="panel-title">Firma del Paciente</h2>
-                <p class="panel-subtitle">Dibuja una firma para reemplazar la actual</p>
-            </div>
-        </div>
-
-        <div class="form-panel">
-            {% if object.firma %}
-                <p class="detail-label" style="margin-bottom: 8px;">Firma actual</p>
-                <div class="signature-box" style="margin-bottom: 14px;">
-                    <img src="{{ object.firma }}" alt="Firma actual">
+        <div class="edit-grid-top">
+            <section class="panel edit-card">
+                <div class="edit-card-head">
+                    <div class="edit-card-title-group">
+                        <div class="edit-card-icon"><span class="material-symbols-outlined">assignment</span></div>
+                        <div>
+                            <h2 class="edit-card-title">Datos del Procedimiento</h2>
+                            <p class="edit-card-subtitle">Ajusta la fecha y corrige los procedimientos realizados.</p>
+                        </div>
+                    </div>
                 </div>
-            {% endif %}
 
-            <div class="signature-wrapper">
-                <canvas id="signature-pad" class="signature-canvas"></canvas>
-            </div>
+                <div class="edit-card-body">
+                    <div class="edit-field">
+                        <div class="edit-field-head">
+                            <label for="id_fecha">Fecha y Hora</label>
+                            <span class="edit-optional-chip">Opcional</span>
+                        </div>
+                        {% with fecha_actual=object.fecha|date:'Y-m-d\\TH:i' %}
+                        {% with fecha_val=form.fecha.value|default:fecha_actual %}
+                        <div class="edit-datetime-row">
+                            <input id="id_fecha" type="datetime-local" name="fecha" class="input" value="{{ fecha_val }}" data-current="{{ fecha_actual }}">
+                            <button type="button" class="edit-reset-btn" id="restore-current-datetime">Mantener actual</button>
+                        </div>
+                        {% endwith %}
+                        {% endwith %}
+                        <p class="edit-field-hint">Si no cambias este campo, o lo dejas vacio, se conserva el registro actual: <strong>{{ object.fecha|date:"d/m/Y H:i" }}</strong>.</p>
+                        {% if form.fecha.errors %}<small class="edit-error">{{ form.fecha.errors|join:", " }}</small>{% endif %}
+                    </div>
 
-            <input type="hidden" name="firma_base64" id="firma_base64">
+                    <div class="edit-field">
+                        <label>Procedimientos Realizados</label>
+                        <div class="edit-procedure-grid">
+                            {% for procedimiento in procedimientos_disponibles %}
+                            <label class="edit-procedure-option">
+                                <input type="checkbox" name="tratamientos_check" value="{{ procedimiento }}" {% if procedimiento in tratamientos_previos %}checked{% endif %}>
+                                <span class="edit-procedure-option-title">{{ procedimiento }}</span>
+                                <span class="edit-procedure-option-mark">
+                                    <span class="material-symbols-outlined" style="font-size: 1rem;">check</span>
+                                </span>
+                            </label>
+                            {% endfor %}
+                        </div>
+                    </div>
 
-            <div class="inline-actions section-space">
-                <button type="button" class="btn btn-outline" id="clear-signature">
-                    <span class="material-symbols-outlined">ink_eraser</span>
-                    Borrar Firma Nueva
-                </button>
-            </div>
+                    <div class="edit-field">
+                        <label for="id_otros_texto">Notas / Otros Procedimientos</label>
+                        <textarea id="id_otros_texto" name="otros_texto" class="textarea edit-note-textarea" rows="4" placeholder="Detalles adicionales de la atencion...">{{ otros_previos }}</textarea>
+                        <p class="edit-field-hint">Puedes complementar la atencion con observaciones o procedimientos no listados arriba.</p>
+                    </div>
+                </div>
+            </section>
+
+            <section class="panel edit-card">
+                <div class="edit-card-head">
+                    <div class="edit-card-title-group">
+                        <div class="edit-card-icon"><span class="material-symbols-outlined">imagesmode</span></div>
+                        <div>
+                            <h2 class="edit-card-title">Gestion de Fotografias</h2>
+                            <p class="edit-card-subtitle">Las fotos se muestran numeradas y pueden borrarse al instante.</p>
+                        </div>
+                    </div>
+                    <div class="edit-photo-toolbar">
+                        <input type="file" id="actual-btn" name="nuevas_fotos_extra" class="edit-photo-input" multiple accept="image/*">
+                        <label for="actual-btn" class="edit-photo-action">
+                            <span class="material-symbols-outlined">add_a_photo</span>
+                            Agregar
+                        </label>
+                    </div>
+                </div>
+
+                <div class="edit-card-body">
+                    <div class="edit-photo-strip" id="photo-strip">
+                        {% for foto in fotos_edicion %}
+                        <div class="edit-photo-card">
+                            <button
+                                type="button"
+                                class="edit-photo-delete-btn"
+                                data-delete-url="{{ foto.delete_url }}"
+                                data-photo-label="{{ foto.label }}"
+                                aria-label="Eliminar {{ foto.label }}">
+                                <span class="material-symbols-outlined">delete</span>
+                            </button>
+                            <a href="{{ foto.url }}" target="_blank" class="edit-photo-card-frame">
+                                <img src="{{ foto.url }}" alt="{{ foto.label }}">
+                            </a>
+                            <span class="edit-photo-card-caption">{{ foto.label }}</span>
+                        </div>
+                        {% empty %}
+                        <div class="edit-photo-empty" id="photo-empty-state">No hay fotos guardadas todavia. Usa <strong>Agregar</strong> para subir nuevas imagenes.</div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="edit-photo-footer-top">
+                        <p class="edit-status-note">Al pulsar la papelera se pedira confirmacion y la foto se eliminara de inmediato.</p>
+                        <p id="file-chosen" class="edit-status-note">Ningun archivo nuevo seleccionado.</p>
+                    </div>
+                    <p class="edit-photo-note">Las fotos nuevas se agregan a la galeria del tratamiento al guardar.</p>
+                </div>
+            </section>
         </div>
-    </section>
 
-    <section class="inline-actions" style="justify-content: flex-end;">
-        <a href="{% url 'detalle_paciente' object.paciente.pk %}" class="btn btn-outline">Cancelar</a>
-        <button type="submit" class="btn btn-primary">
-            <span class="material-symbols-outlined">save</span>
-            Guardar Cambios
-        </button>
-    </section>
-</form>
+        <section class="panel edit-card">
+            <div class="edit-card-head">
+                <div class="edit-card-title-group">
+                    <div class="edit-card-icon"><span class="material-symbols-outlined">draw</span></div>
+                    <div>
+                        <h2 class="edit-card-title">Firma del Paciente</h2>
+                        <p class="edit-card-subtitle">La firma actual se mantiene a menos que dibujes una nueva.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="edit-card-body">
+                <div class="edit-signature-grid">
+                    <div class="edit-signature-current">
+                        <p class="edit-section-label">Firma Actual</p>
+                        <div class="edit-signature-preview-box">
+                            {% if object.firma %}
+                            <img src="{{ object.firma }}" alt="Firma actual">
+                            {% else %}
+                            <span class="edit-signature-empty">Sin firma registrada</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="edit-signature-new">
+                        <div class="edit-signature-head">
+                            <p class="edit-section-label">Nueva Firma (solo si deseas cambiarla)</p>
+                            <button type="button" class="edit-signature-clear" id="clear-signature">
+                                <span class="material-symbols-outlined">ink_eraser</span>
+                                Borrar nueva
+                            </button>
+                        </div>
+                        <div class="edit-signature-pad-shell">
+                            <div class="edit-signature-hint" id="signature-hint">Dibuje aqui para actualizar la firma</div>
+                            <canvas id="signature-pad" class="edit-signature-canvas"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <input type="hidden" name="firma_base64" id="firma_base64">
+            </div>
+        </section>
+
+        <div class="edit-actions">
+            <a href="{% url 'detalle_paciente' object.paciente.pk %}" class="edit-cancel-link">Cancelar</a>
+            <button type="submit" class="btn btn-primary edit-submit-btn">
+                <span class="material-symbols-outlined">save</span>
+                Guardar Cambios
+            </button>
+        </div>
+    </form>
+</section>
 {% endblock %}
 
 {% block extra_js %}
 <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
+{% include "pacientes/includes/cloudinary_direct_upload.html" %}
 <script>
     (function () {
+        var form = document.getElementById('editForm');
+        if (!form) {
+            return;
+        }
+
+        var csrfToken = form.querySelector('[name=csrfmiddlewaretoken]').value;
         var fileInput = document.getElementById('actual-btn');
         var fileChosen = document.getElementById('file-chosen');
+        var photoStrip = document.getElementById('photo-strip');
+        var directUploadsEnabled = {{ cloudinary_direct_uploads|yesno:"true,false" }};
+        var signatureUrl = '{{ cloudinary_signature_url }}';
+        var isUploadingDirect = false;
+
+        function ensureEmptyState() {
+            var cards = photoStrip ? photoStrip.querySelectorAll('.edit-photo-card') : [];
+            var emptyState = document.getElementById('photo-empty-state');
+            if (cards.length === 0 && !emptyState && photoStrip) {
+                emptyState = document.createElement('div');
+                emptyState.id = 'photo-empty-state';
+                emptyState.className = 'edit-photo-empty';
+                emptyState.innerHTML = 'No hay fotos guardadas todavia. Usa <strong>Agregar</strong> para subir nuevas imagenes.';
+                photoStrip.appendChild(emptyState);
+            } else if (cards.length > 0 && emptyState) {
+                emptyState.remove();
+            }
+        }
+
+        function renumberPhotoCards() {
+            if (!photoStrip) {
+                return;
+            }
+            var cards = photoStrip.querySelectorAll('.edit-photo-card');
+            cards.forEach(function (card, index) {
+                var label = 'Foto ' + (index + 1);
+                var caption = card.querySelector('.edit-photo-card-caption');
+                var deleteButton = card.querySelector('.edit-photo-delete-btn');
+                var image = card.querySelector('img');
+                if (caption) {
+                    caption.textContent = label;
+                }
+                if (deleteButton) {
+                    deleteButton.dataset.photoLabel = label;
+                    deleteButton.setAttribute('aria-label', 'Eliminar ' + label);
+                }
+                if (image) {
+                    image.alt = label;
+                }
+            });
+            ensureEmptyState();
+        }
+
+        function bindDeleteButtons() {
+            if (!photoStrip) {
+                return;
+            }
+
+            photoStrip.querySelectorAll('.edit-photo-delete-btn').forEach(function (button) {
+                if (button.dataset.bound === '1') {
+                    return;
+                }
+                button.dataset.bound = '1';
+                button.addEventListener('click', async function () {
+                    var label = button.dataset.photoLabel || 'la foto';
+                    var deleteUrl = button.dataset.deleteUrl;
+                    if (!deleteUrl) {
+                        return;
+                    }
+
+                    if (!window.confirm('Seguro que deseas eliminar ' + label + '?')) {
+                        return;
+                    }
+
+                    button.disabled = true;
+
+                    try {
+                        var response = await fetch(deleteUrl, {
+                            method: 'POST',
+                            headers: {
+                                'X-CSRFToken': csrfToken,
+                                'X-Requested-With': 'XMLHttpRequest',
+                                'Accept': 'application/json'
+                            }
+                        });
+
+                        var payload = await response.json().catch(function () {
+                            return {};
+                        });
+
+                        if (!response.ok) {
+                            throw new Error(payload.detail || 'No se pudo borrar la foto.');
+                        }
+
+                        var card = button.closest('.edit-photo-card');
+                        if (card) {
+                            card.remove();
+                        }
+                        renumberPhotoCards();
+                    } catch (error) {
+                        button.disabled = false;
+                        window.alert(error.message || 'No se pudo borrar la foto.');
+                    }
+                });
+            });
+        }
 
         if (fileInput && fileChosen) {
             fileInput.addEventListener('change', function () {
-                if (this.files.length > 0) {
-                    fileChosen.textContent = this.files.length + ' archivo(s) nuevo(s)';
-                } else {
-                    fileChosen.textContent = 'Ningun archivo nuevo seleccionado';
-                }
+                fileChosen.textContent = this.files.length
+                    ? this.files.length + ' foto(s) nueva(s) lista(s) para guardar.'
+                    : 'Ningun archivo nuevo seleccionado.';
+            });
+        }
+
+        var fechaInput = document.getElementById('id_fecha');
+        var restoreCurrentDatetime = document.getElementById('restore-current-datetime');
+        if (fechaInput && restoreCurrentDatetime) {
+            restoreCurrentDatetime.addEventListener('click', function () {
+                fechaInput.value = fechaInput.dataset.current || '';
             });
         }
 
@@ -162,10 +396,17 @@
             return;
         }
 
+        var signatureHint = document.getElementById('signature-hint');
         var signaturePad = new SignaturePad(canvas, {
-            backgroundColor: 'rgb(255, 255, 255)',
-            penColor: 'rgb(12, 22, 44)'
+            backgroundColor: 'rgba(0, 0, 0, 0)',
+            penColor: 'rgb(231, 237, 255)'
         });
+
+        function toggleSignatureHint() {
+            if (signatureHint) {
+                signatureHint.style.display = signaturePad.isEmpty() ? 'grid' : 'none';
+            }
+        }
 
         function resizeCanvas() {
             var ratio = Math.max(window.devicePixelRatio || 1, 1);
@@ -175,27 +416,83 @@
             canvas.getContext('2d').scale(ratio, ratio);
             signaturePad.clear();
             signaturePad.fromData(data);
+            toggleSignatureHint();
         }
 
+        function setSignatureField() {
+            if (!signaturePad.isEmpty()) {
+                document.getElementById('firma_base64').value = signaturePad.toDataURL('image/png');
+            }
+        }
+
+        signaturePad.addEventListener('beginStroke', toggleSignatureHint);
         window.addEventListener('resize', resizeCanvas);
         resizeCanvas();
+        renumberPhotoCards();
+        bindDeleteButtons();
 
         var clearBtn = document.getElementById('clear-signature');
         if (clearBtn) {
             clearBtn.addEventListener('click', function () {
                 signaturePad.clear();
+                toggleSignatureHint();
             });
         }
 
-        var form = document.getElementById('editForm');
-        if (form) {
-            form.addEventListener('submit', function () {
-                if (!signaturePad.isEmpty()) {
-                    document.getElementById('firma_base64').value = signaturePad.toDataURL('image/png');
+        var submitButton = form.querySelector('button[type="submit"]');
+
+        form.addEventListener('submit', async function (event) {
+            if (isUploadingDirect) {
+                event.preventDefault();
+                return;
+            }
+
+            setSignatureField();
+
+            var extraFiles = fileInput ? Array.from(fileInput.files) : [];
+            if (!directUploadsEnabled || !extraFiles.length) {
+                return;
+            }
+
+            event.preventDefault();
+            isUploadingDirect = true;
+            submitButton.disabled = true;
+            submitButton.innerHTML = '<span class="material-symbols-outlined">cloud_upload</span>Subiendo fotos...';
+
+            try {
+                var extraUploads = await window.CloudinaryDirectUploads.uploadFiles(
+                    extraFiles,
+                    'tratamiento_extra',
+                    signatureUrl,
+                    {
+                        onProgress: function (done, total) {
+                            if (fileChosen) {
+                                fileChosen.textContent = 'Subiendo fotos ' + done + '/' + total + '...';
+                            }
+                        }
+                    }
+                );
+
+                document.getElementById('nuevas_fotos_extra_directas').value = JSON.stringify(extraUploads);
+
+                if (fileInput) {
+                    fileInput.value = '';
                 }
-            });
-        }
+
+                if (fileChosen && extraUploads.length) {
+                    fileChosen.textContent = extraUploads.length + ' foto(s) lista(s) para guardar.';
+                }
+
+                HTMLFormElement.prototype.submit.call(form);
+            } catch (error) {
+                isUploadingDirect = false;
+                submitButton.disabled = false;
+                submitButton.innerHTML = '<span class="material-symbols-outlined">save</span>Guardar Cambios';
+                if (fileChosen) {
+                    fileChosen.textContent = error.message || 'No se pudo subir una de las fotos.';
+                }
+            }
+        });
     })();
 </script>
 {% endblock %}
-

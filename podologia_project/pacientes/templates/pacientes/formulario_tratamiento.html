@@ -1,302 +1,440 @@
 {% extends "pacientes/base.html" %}
 
 {% block page_title %}Nueva Atencion{% endblock %}
+{% block page_subtitle %}Registra el procedimiento y la evidencia visual.{% endblock %}
 {% block topbar_search %}{% endblock %}
-
-{% block topbar_actions %}
-<a href="{% url 'detalle_paciente' paciente.pk %}" class="btn btn-outline">
-    <span class="material-symbols-outlined">arrow_back</span>
-    Volver a ficha
-</a>
-{% endblock %}
+{% block topbar_actions %}{% endblock %}
 
 {% block content %}
 <style>
-    .upload-container {
-        background-color: rgba(255, 255, 255, 0.05);
-        border: 2px dashed #444;
-        border-radius: 20px;
-        transition: all 0.3s ease;
-    }
-
-    .upload-container:hover {
-        border-color: #5ad3ff;
-        background-color: rgba(90, 211, 255, 0.08);
-    }
-
-    #actual-btn {
-        display: none;
-    }
-
-    .upload-btn-label {
-        background: linear-gradient(45deg, #5ad3ff, #4f7bff);
-        color: #ffffff;
-        padding: 12px 25px;
-        font-family: sans-serif;
-        border-radius: 50px;
-        cursor: pointer;
-        transition: transform 0.2s;
-        box-shadow: 0 4px 15px rgba(90, 211, 255, 0.3);
-        display: inline-flex;
-        align-items: center;
-        font-weight: 600;
-        letter-spacing: 0.5px;
-    }
-
-    .upload-btn-label:hover {
-        transform: translateY(-2px);
-    }
-
-    #file-chosen {
-        margin-left: 15px;
-        font-family: sans-serif;
-        color: #bbbbbb;
-        font-style: italic;
-    }
-
-    .signature-wrapper {
-        width: 100%;
-        position: relative;
-        background: #ffffff;
-        border-radius: 15px;
-        overflow: hidden;
-        border: 1px solid #ccc;
-    }
-
-    canvas {
-        display: block;
-        width: 100%;
-        height: 200px;
-    }
-
-    .consent-box {
-        background-color: rgba(222, 239, 255, 0.95);
-        color: #333;
-        border-left: 5px solid #4f7bff;
-        border-radius: 10px;
-    }
+    .topbar { display: none; }
+    .create-shell,.create-form,.create-card-body,.create-field,.create-signature-pane{display:grid}
+    .create-shell{gap:28px}
+    .create-hero{display:flex;justify-content:space-between;align-items:flex-start;gap:24px}
+    .create-hero-copy{display:grid;gap:10px}
+    .create-back-link{display:inline-flex;align-items:center;gap:8px;width:fit-content;color:rgba(174,192,232,.78);text-decoration:none;font-size:.94rem}
+    .create-back-link:hover,.create-photo-action:hover{color:#fff}
+    .create-hero-copy h1{margin:0;font-family:"Sora",sans-serif;font-size:clamp(2.35rem,4vw,3.15rem);font-weight:600;line-height:1.02;letter-spacing:-.04em}
+    .create-hero-copy p{margin:0;color:rgba(174,192,232,.72);font-size:1.02rem}
+    .create-patient-summary{display:grid;gap:6px;justify-items:end;padding-top:8px}
+    .create-patient-label,.create-field label,.create-section-label{color:rgba(174,192,232,.76);text-transform:uppercase;letter-spacing:.12em;font-size:.81rem;font-weight:700}
+    .create-patient-name{color:#7fb7ff;font-size:clamp(1.5rem,2.8vw,2.15rem);font-weight:500;text-align:right;line-height:1.08}
+    .create-form{gap:28px}
+    .create-grid-top{display:grid;grid-template-columns:minmax(0,1.02fr) minmax(0,.98fr);gap:28px;align-items:start}
+    .create-card{overflow:hidden;border-radius:24px}
+    .create-card-head{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:24px 26px 18px;border-bottom:1px solid rgba(112,130,255,.14)}
+    .create-card-title-group{display:flex;align-items:center;gap:14px;min-width:0}
+    .create-card-icon{width:44px;height:44px;border-radius:14px;display:grid;place-items:center;flex-shrink:0;color:#7cb5ff;background:rgba(53,91,166,.22);border:1px solid rgba(112,130,255,.14)}
+    .create-card-icon .material-symbols-outlined{font-size:1.4rem}
+    .create-card-title{margin:0;font-family:"Sora",sans-serif;font-size:1.12rem;font-weight:600}
+    .create-card-subtitle{margin:4px 0 0;color:rgba(174,192,232,.62);font-size:.88rem}
+    .create-card-body{gap:18px;padding:20px 26px 26px}
+    .create-field{gap:10px}
+    .create-field-head,.create-photo-footer-top,.create-signature-head,.create-actions{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+    .create-optional-chip{display:inline-flex;align-items:center;padding:6px 10px;border-radius:999px;border:1px solid rgba(101,224,191,.22);background:rgba(14,74,74,.28);color:#67dfc2;font-size:.74rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
+    .create-datetime-row{display:flex;gap:10px;align-items:stretch}
+    .create-datetime-row .input{flex:1;min-width:0}
+    .create-reset-btn{border:1px solid rgba(112,130,255,.24);background:rgba(10,17,34,.92);color:rgba(224,232,255,.84);border-radius:16px;padding:0 16px;font-size:.88rem;font-weight:600}
+    .create-reset-btn:hover{border-color:rgba(111,183,255,.4)}
+    .create-field-hint,.create-status-note,.create-photo-note{margin:0;color:rgba(174,192,232,.6);font-size:.84rem;line-height:1.5}
+    .create-field-hint strong{color:rgba(236,242,255,.88)}
+    .create-procedure-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+    .create-procedure-option{position:relative;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 18px;border-radius:18px;border:1px solid rgba(112,130,255,.18);background:rgba(10,18,36,.78);color:#f1f6ff;cursor:pointer;transition:border-color .18s ease, transform .18s ease, box-shadow .18s ease}
+    .create-procedure-option:hover{transform:translateY(-1px);border-color:rgba(111,183,255,.34)}
+    .create-procedure-option input{position:absolute;inset:0;opacity:0;cursor:pointer}
+    .create-procedure-option-title{font-size:.92rem;font-weight:600;line-height:1.35}
+    .create-procedure-option-mark{width:28px;height:28px;border-radius:999px;border:1px solid rgba(112,130,255,.24);display:grid;place-items:center;flex-shrink:0;color:transparent;background:rgba(14,21,40,.92)}
+    .create-procedure-option:has(input:checked){border-color:rgba(111,183,255,.52);background:linear-gradient(180deg,rgba(19,34,66,.95),rgba(15,28,54,.9));box-shadow:0 0 0 1px rgba(111,183,255,.14)}
+    .create-procedure-option:has(input:checked) .create-procedure-option-mark{color:#fff;border-color:rgba(111,183,255,.45);background:linear-gradient(135deg,#72b7ff,#5b90ff)}
+    .create-note-textarea{min-height:118px;resize:vertical;line-height:1.52}
+    .create-photo-action{display:inline-flex;align-items:center;gap:8px;border:0;background:transparent;color:rgba(229,236,255,.9);cursor:pointer;font-size:.94rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;text-decoration:none;padding:0}
+    .create-photo-input{display:none}
+    .create-photo-empty{min-height:228px;border-radius:18px;border:1px dashed rgba(112,130,255,.22);background:linear-gradient(180deg,rgba(12,18,36,.74),rgba(12,21,42,.48));display:grid;place-items:center;padding:22px;text-align:center;color:rgba(174,192,232,.72)}
+    .create-photo-strip{display:flex;gap:16px;overflow-x:auto;padding-bottom:4px}
+    .create-photo-thumb{position:relative;flex:0 0 190px;min-width:190px}
+    .create-photo-thumb-frame{display:block;width:100%;aspect-ratio:.88/1;border-radius:16px;overflow:hidden;border:1px solid rgba(112,130,255,.18);background:linear-gradient(180deg,rgba(7,14,28,.96),rgba(13,24,47,.88))}
+    .create-photo-thumb-frame img{width:100%;height:100%;object-fit:cover;display:block}
+    .create-photo-thumb-caption{position:absolute;left:12px;bottom:12px;display:inline-flex;align-items:center;padding:5px 10px;border-radius:999px;background:rgba(11,17,31,.8);border:1px solid rgba(112,130,255,.18);color:#f3f7ff;font-size:.75rem;font-weight:600}
+    .create-signature-grid{display:grid;grid-template-columns:320px minmax(0,1fr);gap:28px;align-items:start}
+    .create-signature-preview,.create-signature-new{display:grid;gap:12px}
+    .create-signature-preview-box{min-height:160px;border-radius:16px;border:1px solid rgba(112,130,255,.18);background:linear-gradient(180deg,rgba(10,20,42,.96),rgba(9,17,34,.92));display:grid;place-items:center;padding:16px;text-align:center;color:rgba(174,192,232,.72)}
+    .create-signature-clear{display:inline-flex;align-items:center;gap:8px;color:#ff617d;font-size:.86rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;background:transparent;border:0;padding:0;cursor:pointer}
+    .create-signature-pad-shell{position:relative;min-height:160px;border-radius:16px;border:1px dashed rgba(112,130,255,.24);background:linear-gradient(180deg,rgba(14,21,40,.66),rgba(14,21,40,.66)),repeating-linear-gradient(to bottom,transparent 0,transparent 31px,rgba(134,151,197,.12) 31px,rgba(134,151,197,.12) 32px);overflow:hidden}
+    .create-signature-hint{position:absolute;inset:0;display:grid;place-items:center;padding:18px;text-align:center;color:rgba(174,192,232,.2);font-size:1rem;pointer-events:none}
+    .create-signature-canvas{width:100%;height:160px;display:block;background:transparent}
+    .create-consent-box{border-radius:16px;border:1px solid rgba(255,116,144,.18);background:rgba(41,18,32,.42);padding:16px 18px;color:#ff9fb3;font-size:.92rem;line-height:1.55}
+    .create-actions{justify-content:flex-end}
+    .create-cancel-link{color:#eef4ff;text-decoration:none;font-weight:600;padding:10px 14px}
+    .create-submit-btn{min-width:250px;justify-content:center;border-radius:16px;padding:14px 18px}
+    @media (max-width:1200px){.create-grid-top,.create-signature-grid{grid-template-columns:minmax(0,1fr)}}
+    @media (max-width:900px){.create-hero{flex-direction:column}.create-patient-summary{justify-items:start;padding-top:0}.create-patient-name{text-align:left}.create-card-head,.create-card-body{padding-left:20px;padding-right:20px}.create-procedure-grid{grid-template-columns:minmax(0,1fr)}}
+    @media (max-width:640px){.create-shell,.create-form{gap:22px}.create-card-head,.create-card-body{padding-left:16px;padding-right:16px}.create-datetime-row,.create-actions{flex-direction:column;align-items:stretch}.create-submit-btn{width:100%;min-width:0}}
 </style>
 
-<div class="row justify-content-center">
-    <div class="col-lg-8">
-        <div class="d-flex align-items-center mb-4">
-            <a href="{% url 'detalle_paciente' paciente.pk %}" class="text-decoration-none me-3">
-                <span class="material-icons-round" style="font-size: 36px; color: #5ad3ff;">arrow_back</span>
+<section class="create-shell">
+    <header class="create-hero">
+        <div class="create-hero-copy">
+            <a href="{% url 'detalle_paciente' paciente.pk %}" class="create-back-link">
+                <span class="material-symbols-outlined">arrow_back</span>
+                Volver a ficha
             </a>
-            <div>
-                <h2 class="fw-bold text-white mb-0">Nueva Atencion</h2>
-                <p class="text-secondary mb-0">Paciente: <strong class="text-primary">{{ paciente.nombre }}</strong></p>
-            </div>
+            <h1>Nueva Atencion</h1>
+            <p>Registra el procedimiento y la evidencia visual del paciente.</p>
         </div>
+        <div class="create-patient-summary">
+            <span class="create-patient-label">Paciente</span>
+            <span class="create-patient-name">{{ paciente.nombre }}</span>
+        </div>
+    </header>
 
-        <div class="card card-pro shadow-lg border-0">
-            <div class="card-body p-4 p-md-5">
-                <form method="POST" enctype="multipart/form-data" id="tratamientoForm" novalidate>
-                    {% csrf_token %}
+    <form method="POST" enctype="multipart/form-data" id="tratamientoForm" class="create-form" novalidate>
+        {% csrf_token %}
+        <input type="hidden" name="foto_principal_directa" id="foto_principal_directa">
+        <input type="hidden" name="fotos_extra_directas" id="fotos_extra_directas">
 
-                    <div class="mb-4">
-                        <label class="form-label text-white ms-3 small">Fecha y Hora de Atencion</label>
-                        <input
-                            id="id_fecha"
-                            type="datetime-local"
-                            name="fecha"
-                            class="form-control"
-                            style="border-radius: 20px;"
-                            value="{{ fecha_previo|default:'' }}">
+        <div class="create-grid-top">
+            <section class="panel create-card">
+                <div class="create-card-head">
+                    <div class="create-card-title-group">
+                        <div class="create-card-icon"><span class="material-symbols-outlined">assignment</span></div>
+                        <div>
+                            <h2 class="create-card-title">Datos del Procedimiento</h2>
+                            <p class="create-card-subtitle">Selecciona los procedimientos realizados y agrega notas si hace falta.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="create-card-body">
+                    <div class="create-field">
+                        <div class="create-field-head">
+                            <label for="id_fecha">Fecha y Hora</label>
+                            <span class="create-optional-chip">Opcional</span>
+                        </div>
+                        <div class="create-datetime-row">
+                            <input id="id_fecha" type="datetime-local" name="fecha" class="input" value="{{ fecha_previo|default:'' }}">
+                            <button type="button" class="create-reset-btn" id="use-current-datetime">Usar ahora</button>
+                        </div>
+                        <p class="create-field-hint">Si lo dejas vacio, se registra la fecha y hora actuales automaticamente.</p>
                     </div>
 
-                    <h6 class="text-secondary text-uppercase fw-bold mb-4 small" style="letter-spacing: 1px;">
-                        <span class="material-icons-round align-middle me-1 text-primary">checklist</span>
-                        Procedimientos Realizados
-                    </h6>
-
-                    <div class="row g-3 mb-4">
-                        <div class="col-md-6">
-                            <label class="p-3 rounded-4 border border-secondary d-flex align-items-center justify-content-between" style="background: #252525; cursor: pointer;">
-                                <span class="text-white mb-0 fw-medium">ONICOTOMIA</span>
-                                <div class="form-check mb-0">
-                                    <input class="form-check-input" type="checkbox" name="tratamientos_check" value="ONICOTOMIA" style="width: 25px; height: 25px; border-color: #5ad3ff;" {% if 'ONICOTOMIA' in tratamientos_previos %}checked{% endif %}>
-                                </div>
+                    <div class="create-field">
+                        <label>Procedimientos Realizados</label>
+                        <div class="create-procedure-grid">
+                            {% for procedimiento in procedimientos_disponibles %}
+                            <label class="create-procedure-option">
+                                <input type="checkbox" name="tratamientos_check" value="{{ procedimiento }}" {% if procedimiento in tratamientos_previos %}checked{% endif %}>
+                                <span class="create-procedure-option-title">{{ procedimiento }}</span>
+                                <span class="create-procedure-option-mark">
+                                    <span class="material-symbols-outlined" style="font-size: 1rem;">check</span>
+                                </span>
                             </label>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="p-3 rounded-4 border border-secondary d-flex align-items-center justify-content-between" style="background: #252525; cursor: pointer;">
-                                <span class="text-white mb-0 fw-medium">DEBASTADO UNGUEAL</span>
-                                <div class="form-check mb-0">
-                                    <input class="form-check-input" type="checkbox" name="tratamientos_check" value="DEBASTADO UNGUEAL" style="width: 25px; height: 25px; border-color: #5ad3ff;" {% if 'DEBASTADO UNGUEAL' in tratamientos_previos %}checked{% endif %}>
-                                </div>
-                            </label>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="p-3 rounded-4 border border-secondary d-flex align-items-center justify-content-between" style="background: #252525; cursor: pointer;">
-                                <span class="text-white mb-0 fw-medium">RESECADO DE HIPERQUERATOSIS</span>
-                                <div class="form-check mb-0">
-                                    <input class="form-check-input" type="checkbox" name="tratamientos_check" value="RESECADO DE HIPERQUERATOSIS" style="width: 25px; height: 25px; border-color: #5ad3ff;" {% if 'RESECADO DE HIPERQUERATOSIS' in tratamientos_previos %}checked{% endif %}>
-                                </div>
-                            </label>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="p-3 rounded-4 border border-secondary d-flex align-items-center justify-content-between" style="background: #252525; cursor: pointer;">
-                                <span class="text-white mb-0 fw-medium">CURACION</span>
-                                <div class="form-check mb-0">
-                                    <input class="form-check-input" type="checkbox" name="tratamientos_check" value="CURACION" style="width: 25px; height: 25px; border-color: #5ad3ff;" {% if 'CURACION' in tratamientos_previos %}checked{% endif %}>
-                                </div>
-                            </label>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="p-3 rounded-4 border border-secondary d-flex align-items-center justify-content-between" style="background: #252525; cursor: pointer;">
-                                <span class="text-white mb-0 fw-medium">ESPICULECTOMIA</span>
-                                <div class="form-check mb-0">
-                                    <input class="form-check-input" type="checkbox" name="tratamientos_check" value="ESPICULECTOMIA" style="width: 25px; height: 25px; border-color: #5ad3ff;" {% if 'ESPICULECTOMIA' in tratamientos_previos %}checked{% endif %}>
-                                </div>
-                            </label>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="p-3 rounded-4 border border-secondary d-flex align-items-center justify-content-between" style="background: #252525; cursor: pointer;">
-                                <span class="text-white mb-0 fw-medium">ORTONIXIA</span>
-                                <div class="form-check mb-0">
-                                    <input class="form-check-input" type="checkbox" name="tratamientos_check" value="ORTONIXIA" style="width: 25px; height: 25px; border-color: #5ad3ff;" {% if 'ORTONIXIA' in tratamientos_previos %}checked{% endif %}>
-                                </div>
-                            </label>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="p-3 rounded-4 border border-secondary d-flex align-items-center justify-content-between" style="background: #252525; cursor: pointer;">
-                                <span class="text-white mb-0 fw-medium">LASER ONICOMICOSIS</span>
-                                <div class="form-check mb-0">
-                                    <input class="form-check-input" type="checkbox" name="tratamientos_check" value="LASER ONICOMICOSIS" style="width: 25px; height: 25px; border-color: #5ad3ff;" {% if 'LASER ONICOMICOSIS' in tratamientos_previos %}checked{% endif %}>
-                                </div>
-                            </label>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="p-3 rounded-4 border border-secondary d-flex align-items-center justify-content-between" style="background: #252525; cursor: pointer;">
-                                <span class="text-white mb-0 fw-medium">TECNICA FENOL ALCOHOL</span>
-                                <div class="form-check mb-0">
-                                    <input class="form-check-input" type="checkbox" name="tratamientos_check" value="TECNICA FENOL ALCOHOL" style="width: 25px; height: 25px; border-color: #5ad3ff;" {% if 'TECNICA FENOL ALCOHOL' in tratamientos_previos %}checked{% endif %}>
-                                </div>
-                            </label>
+                            {% endfor %}
                         </div>
                     </div>
 
-                    <div class="mb-4">
-                        <label class="form-label text-white ms-3 small">Notas / Otros Procedimientos</label>
-                        <textarea name="otros_texto" class="form-control" rows="3" style="border-radius: 20px;" placeholder="Detalles adicionales de la atencion...">{{ otros_previos }}</textarea>
+                    <div class="create-field">
+                        <label for="id_otros_texto">Notas / Otros Procedimientos</label>
+                        <textarea id="id_otros_texto" name="otros_texto" class="textarea create-note-textarea" rows="4" placeholder="Detalles adicionales de la atencion...">{{ otros_previos }}</textarea>
+                        <p class="create-field-hint">Puedes complementar el registro con observaciones o procedimientos no listados arriba.</p>
                     </div>
+                </div>
+            </section>
 
-                    <hr class="border-secondary my-5 opacity-50">
-
-                    <h6 class="text-secondary text-uppercase fw-bold mb-4 small" style="letter-spacing: 1px;">
-                        <span class="material-icons-round align-middle me-1 text-primary">add_a_photo</span>
-                        Evidencia Fotografica
-                    </h6>
-
-                    <div class="upload-container p-4 mb-5 text-center">
-                        <input type="file" id="actual-btn" name="fotos_extra" multiple accept="image/*">
-
-                        <label for="actual-btn" class="upload-btn-label mb-3">
-                            <span class="material-icons-round me-2">cloud_upload</span>
-                            Seleccionar Fotos
+            <section class="panel create-card">
+                <div class="create-card-head">
+                    <div class="create-card-title-group">
+                        <div class="create-card-icon"><span class="material-symbols-outlined">imagesmode</span></div>
+                        <div>
+                            <h2 class="create-card-title">Gestion de Fotografias</h2>
+                            <p class="create-card-subtitle">Agrega las fotos del procedimiento con el mismo flujo de la ficha editada.</p>
+                        </div>
+                    </div>
+                    <div class="create-photo-toolbar">
+                        <input type="file" id="actual-btn" name="fotos_extra" class="create-photo-input" multiple accept="image/*">
+                        <label for="actual-btn" class="create-photo-action">
+                            <span class="material-symbols-outlined">add_a_photo</span>
+                            Agregar
                         </label>
-
-                        <div id="preview-container" class="mt-2 d-none">
-                            <span class="material-icons-round align-middle text-success">check_circle</span>
-                            <span id="file-chosen">Ningun archivo seleccionado</span>
-                        </div>
-
-                        <p class="text-white-50 small mb-0 mt-2">Puedes subir multiples imagenes (JPG, PNG) desde tu dispositivo.</p>
                     </div>
+                </div>
 
-                    <hr class="border-secondary my-5 opacity-50">
-
-                    <h6 class="text-secondary text-uppercase fw-bold mb-4 small" style="letter-spacing: 1px;">
-                        <span class="material-icons-round align-middle me-1 text-primary">draw</span>
-                        Conformidad del Paciente
-                    </h6>
-
-                    <div class="consent-box p-3 mb-3">
-                        <h6 class="fw-bold mb-2" style="color: #3159bf;">Consentimiento informado:</h6>
-                        <p class="mb-0 small" style="line-height: 1.5;">
-                            El usuario deja constancia de que se le explica sobre los tratamientos podologicos y sus riesgos.
-                            Tambien se entrega informacion clara para resolver dudas antes del procedimiento.
-                        </p>
+                <div class="create-card-body">
+                    <div class="create-photo-strip" id="selected-photos-wrap">
+                        <div class="create-photo-empty" id="selected-photos-empty">Aun no hay fotos seleccionadas. Usa <strong>Agregar</strong> para subir imagenes del procedimiento.</div>
                     </div>
-
-                    <div class="signature-wrapper mb-3 shadow-sm">
-                        <canvas id="signature-pad"></canvas>
+                    <div class="create-photo-footer-top">
+                        <p class="create-status-note">Al guardar, las fotos se suben y quedan asociadas a esta atencion.</p>
+                        <p id="file-chosen" class="create-status-note">Ningun archivo nuevo seleccionado.</p>
                     </div>
-
-                    <input type="hidden" name="firma_base64" id="firma_base64">
-
-                    <div class="d-flex justify-content-end mb-5">
-                        <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill px-3" id="clear-signature">
-                            <span class="material-icons-round align-middle" style="font-size: 16px;">delete_sweep</span>
-                            Borrar Firma
-                        </button>
-                    </div>
-
-                    <div class="d-grid">
-                        <button type="submit" class="btn btn-primary btn-oval-pro py-3 shadow-lg" style="background: linear-gradient(45deg, #5ad3ff, #4f7bff); border:none; font-size: 1.1rem;">
-                            <span class="material-icons-round align-middle me-2">save</span>
-                            REGISTRAR ATENCION
-                        </button>
-                    </div>
-                </form>
-            </div>
+                    <p class="create-photo-note">Puedes seleccionar varias imagenes a la vez. Se conservara el orden en que las elijas.</p>
+                </div>
+            </section>
         </div>
-    </div>
-</div>
 
+        <section class="panel create-card">
+            <div class="create-card-head">
+                <div class="create-card-title-group">
+                    <div class="create-card-icon"><span class="material-symbols-outlined">draw</span></div>
+                    <div>
+                        <h2 class="create-card-title">Firma del Paciente</h2>
+                        <p class="create-card-subtitle">Registra la conformidad del paciente antes de guardar la atencion.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="create-card-body">
+                <div class="create-signature-grid">
+                    <div class="create-signature-preview">
+                        <p class="create-section-label">Consentimiento</p>
+                        <div class="create-consent-box">
+                            El paciente declara haber sido informado sobre los tratamientos podologicos, riesgos y cuidados vinculados a este procedimiento.
+                        </div>
+                        <div class="create-signature-preview-box">
+                            La firma quedara registrada al guardar esta atencion.
+                        </div>
+                    </div>
+
+                    <div class="create-signature-new">
+                        <div class="create-signature-head">
+                            <p class="create-section-label">Firma del Paciente</p>
+                            <button type="button" class="create-signature-clear" id="clear-signature">
+                                <span class="material-symbols-outlined">ink_eraser</span>
+                                Borrar firma
+                            </button>
+                        </div>
+                        <div class="create-signature-pad-shell">
+                            <div class="create-signature-hint" id="signature-hint">Dibuje aqui para registrar la conformidad</div>
+                            <canvas id="signature-pad" class="create-signature-canvas"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <input type="hidden" name="firma_base64" id="firma_base64">
+            </div>
+        </section>
+
+        <div class="create-actions">
+            <a href="{% url 'detalle_paciente' paciente.pk %}" class="create-cancel-link">Cancelar</a>
+            <button type="submit" class="btn btn-primary create-submit-btn">
+                <span class="material-symbols-outlined">save</span>
+                Registrar Atencion
+            </button>
+        </div>
+    </form>
+</section>
+{% endblock %}
+
+{% block extra_js %}
 <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
+{% include "pacientes/includes/cloudinary_direct_upload.html" %}
 <script>
-    const actualBtn = document.getElementById('actual-btn');
-    const fileChosen = document.getElementById('file-chosen');
-    const previewContainer = document.getElementById('preview-container');
-
-    actualBtn.addEventListener('change', function () {
-        if (this.files.length > 0) {
-            fileChosen.textContent = this.files.length + ' archivo(s) seleccionado(s)';
-            previewContainer.classList.remove('d-none');
-        } else {
-            fileChosen.textContent = 'Ningun archivo seleccionado';
-            previewContainer.classList.add('d-none');
+    (function () {
+        var form = document.getElementById('tratamientoForm');
+        if (!form) {
+            return;
         }
-    });
 
-    var fechaInput = document.getElementById('id_fecha');
-    if (fechaInput && !fechaInput.value) {
-        var ahora = new Date();
-        ahora.setSeconds(0, 0);
-        var tzOffset = ahora.getTimezoneOffset() * 60000;
-        var localISO = new Date(ahora.getTime() - tzOffset).toISOString().slice(0, 16);
-        fechaInput.value = localISO;
-    }
+        var fileInput = document.getElementById('actual-btn');
+        var fileChosen = document.getElementById('file-chosen');
+        var selectedPhotosWrap = document.getElementById('selected-photos-wrap');
+        var selectedPhotosEmpty = document.getElementById('selected-photos-empty');
+        var submitButton = form.querySelector('button[type="submit"]');
+        var directUploadsEnabled = {{ cloudinary_direct_uploads|yesno:"true,false" }};
+        var signatureUrl = '{{ cloudinary_signature_url }}';
+        var isUploadingDirect = false;
 
-    var canvas = document.getElementById('signature-pad');
-    var signaturePad = new SignaturePad(canvas, {
-        backgroundColor: 'rgb(255, 255, 255)',
-        penColor: 'rgb(0, 0, 0)'
-    });
-
-    function resizeCanvas() {
-        var ratio = Math.max(window.devicePixelRatio || 1, 1);
-        var data = signaturePad.toData();
-        canvas.width = canvas.offsetWidth * ratio;
-        canvas.height = canvas.offsetHeight * ratio;
-        canvas.getContext('2d').scale(ratio, ratio);
-        signaturePad.clear();
-        signaturePad.fromData(data);
-    }
-
-    window.addEventListener('resize', resizeCanvas);
-    resizeCanvas();
-
-    document.getElementById('clear-signature').addEventListener('click', function () {
-        signaturePad.clear();
-    });
-
-    document.getElementById('tratamientoForm').addEventListener('submit', function () {
-        if (!signaturePad.isEmpty()) {
-            document.getElementById('firma_base64').value = signaturePad.toDataURL('image/png');
+        function setCurrentDateTime() {
+            var fechaInput = document.getElementById('id_fecha');
+            if (!fechaInput) {
+                return;
+            }
+            var ahora = new Date();
+            ahora.setSeconds(0, 0);
+            var tzOffset = ahora.getTimezoneOffset() * 60000;
+            var localISO = new Date(ahora.getTime() - tzOffset).toISOString().slice(0, 16);
+            fechaInput.value = localISO;
         }
-    });
+
+        function clearSelectedPhotoThumbs() {
+            if (!selectedPhotosWrap) {
+                return;
+            }
+            Array.from(selectedPhotosWrap.querySelectorAll('.create-photo-thumb')).forEach(function (item) {
+                item.remove();
+            });
+        }
+
+        function renderSelectedPhotoThumbs(files) {
+            if (!selectedPhotosWrap) {
+                return;
+            }
+
+            clearSelectedPhotoThumbs();
+            if (selectedPhotosEmpty) {
+                selectedPhotosEmpty.style.display = files.length ? 'none' : 'grid';
+            }
+
+            files.forEach(function (file, index) {
+                var thumb = document.createElement('div');
+                thumb.className = 'create-photo-thumb';
+
+                var frame = document.createElement('div');
+                frame.className = 'create-photo-thumb-frame';
+
+                var image = document.createElement('img');
+                image.alt = 'Foto ' + (index + 1);
+
+                var caption = document.createElement('span');
+                caption.className = 'create-photo-thumb-caption';
+                caption.textContent = 'Foto ' + (index + 1);
+
+                frame.appendChild(image);
+                thumb.appendChild(frame);
+                thumb.appendChild(caption);
+                selectedPhotosWrap.appendChild(thumb);
+
+                var reader = new FileReader();
+                reader.onload = function (event) {
+                    image.src = event.target.result;
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        if (fileInput && fileChosen) {
+            fileInput.addEventListener('change', function () {
+                var files = Array.from(this.files || []);
+                fileChosen.textContent = files.length
+                    ? files.length + ' foto(s) nueva(s) lista(s) para guardar.'
+                    : 'Ningun archivo nuevo seleccionado.';
+                renderSelectedPhotoThumbs(files);
+            });
+        }
+
+        var useCurrentDatetime = document.getElementById('use-current-datetime');
+        if (useCurrentDatetime) {
+            useCurrentDatetime.addEventListener('click', setCurrentDateTime);
+        }
+
+        var fechaInput = document.getElementById('id_fecha');
+        if (fechaInput && !fechaInput.value) {
+            setCurrentDateTime();
+        }
+
+        var canvas = document.getElementById('signature-pad');
+        if (!canvas) {
+            return;
+        }
+
+        var signatureHint = document.getElementById('signature-hint');
+        var signaturePad = new SignaturePad(canvas, {
+            backgroundColor: 'rgba(0, 0, 0, 0)',
+            penColor: 'rgb(231, 237, 255)'
+        });
+
+        function toggleSignatureHint() {
+            if (signatureHint) {
+                signatureHint.style.display = signaturePad.isEmpty() ? 'grid' : 'none';
+            }
+        }
+
+        function resizeCanvas() {
+            var ratio = Math.max(window.devicePixelRatio || 1, 1);
+            var data = signaturePad.toData();
+            canvas.width = canvas.offsetWidth * ratio;
+            canvas.height = canvas.offsetHeight * ratio;
+            canvas.getContext('2d').scale(ratio, ratio);
+            signaturePad.clear();
+            signaturePad.fromData(data);
+            toggleSignatureHint();
+        }
+
+        function setSignatureField() {
+            if (!signaturePad.isEmpty()) {
+                document.getElementById('firma_base64').value = signaturePad.toDataURL('image/png');
+            }
+        }
+
+        signaturePad.addEventListener('beginStroke', toggleSignatureHint);
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        var clearBtn = document.getElementById('clear-signature');
+        if (clearBtn) {
+            clearBtn.addEventListener('click', function () {
+                signaturePad.clear();
+                toggleSignatureHint();
+            });
+        }
+
+        form.addEventListener('submit', async function (event) {
+            if (isUploadingDirect) {
+                event.preventDefault();
+                return;
+            }
+
+            setSignatureField();
+
+            var selectedFiles = fileInput ? Array.from(fileInput.files) : [];
+            if (!directUploadsEnabled || !selectedFiles.length) {
+                return;
+            }
+
+            event.preventDefault();
+            isUploadingDirect = true;
+            submitButton.disabled = true;
+            submitButton.innerHTML = '<span class="material-symbols-outlined">cloud_upload</span>Subiendo fotos...';
+
+            try {
+                var fotoPrincipal = selectedFiles.slice(0, 1);
+                var fotosExtra = selectedFiles.slice(1);
+
+                var fotoPrincipalSubida = await window.CloudinaryDirectUploads.uploadFiles(
+                    fotoPrincipal,
+                    'tratamiento_principal',
+                    signatureUrl,
+                    {
+                        onProgress: function (done, total) {
+                            if (fileChosen) {
+                                fileChosen.textContent = 'Subiendo foto principal ' + done + '/' + total + '...';
+                            }
+                        }
+                    }
+                );
+
+                var fotosExtraSubidas = await window.CloudinaryDirectUploads.uploadFiles(
+                    fotosExtra,
+                    'tratamiento_extra',
+                    signatureUrl,
+                    {
+                        onProgress: function (done, total) {
+                            if (fileChosen) {
+                                fileChosen.textContent = 'Subiendo fotos ' + done + '/' + total + '...';
+                            }
+                        }
+                    }
+                );
+
+                document.getElementById('foto_principal_directa').value = JSON.stringify(fotoPrincipalSubida[0] || null);
+                document.getElementById('fotos_extra_directas').value = JSON.stringify(fotosExtraSubidas);
+
+                if (fileInput) {
+                    fileInput.value = '';
+                }
+                if (fileChosen) {
+                    fileChosen.textContent = 'Fotos listas para guardar.';
+                }
+
+                HTMLFormElement.prototype.submit.call(form);
+            } catch (error) {
+                isUploadingDirect = false;
+                submitButton.disabled = false;
+                submitButton.innerHTML = '<span class="material-symbols-outlined">save</span>Registrar Atencion';
+                if (fileChosen) {
+                    fileChosen.textContent = error.message || 'No se pudo subir una de las fotos.';
+                }
+            }
+        });
+    })();
 </script>
 {% endblock %}

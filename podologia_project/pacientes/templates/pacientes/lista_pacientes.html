@@ -169,15 +169,33 @@
                 return;
             }
 
-            var colors = [
-                '#5ad3ff',
-                '#6f7cff',
-                '#25f0ff',
-                '#63e6be',
-                '#f9c74f',
-                '#f9844a',
-                '#f94144'
-            ];
+            function buildPalette(count) {
+                var base = [
+                    '#5ad3ff',
+                    '#6f7cff',
+                    '#25f0ff',
+                    '#63e6be',
+                    '#f9c74f',
+                    '#f9844a',
+                    '#f94144',
+                    '#c77dff',
+                    '#90be6d',
+                    '#43aa8b'
+                ];
+
+                if (count <= base.length) {
+                    return base.slice(0, count);
+                }
+
+                var colors = base.slice();
+                for (var i = base.length; i < count; i += 1) {
+                    var hue = Math.round((360 / count) * i);
+                    colors.push('hsl(' + hue + ', 78%, 62%)');
+                }
+                return colors;
+            }
+
+            var colors = buildPalette(values.length);
 
             new Chart(canvas, {
                 type: 'doughnut',
@@ -185,7 +203,7 @@
                     labels: labels,
                     datasets: [{
                         data: values,
-                        backgroundColor: colors.slice(0, values.length),
+                        backgroundColor: colors,
                         borderColor: 'rgba(11, 16, 31, 0.95)',
                         borderWidth: 2,
                         hoverOffset: 8

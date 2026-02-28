@@ -8,7 +8,6 @@ from .models import Paciente, Tratamiento
 
 RUT_REGEX = re.compile(r"^\d{7,8}-[\dkK]$")
 PHONE_REGEX = re.compile(r"^[0-9+()\-\s]{8,20}$")
-MAX_UPLOAD_BYTES = 10 * 1024 * 1024
 
 
 def _normalizar_espacios(valor: str) -> str:
@@ -89,37 +88,21 @@ class PacienteForm(forms.ModelForm):
 
 
 class TratamientoForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['fecha'].required = False
+
     class Meta:
         model = Tratamiento
-        # Solo editamos el texto y la foto principal al actualizar
-        fields = ['fecha', 'procedimiento', 'foto']
+        fields = ['fecha']
         widgets = {
             'fecha': forms.DateTimeInput(attrs={'class': 'form-control', 'type': 'datetime-local'}),
-            'procedimiento': forms.Textarea(attrs={'class': 'form-control', 'rows': 4}),
-            'foto': forms.ClearableFileInput(attrs={'class': 'form-control'}),
         }
 
     def clean_fecha(self):
         fecha = self.cleaned_data.get('fecha')
+        if not fecha and self.instance and self.instance.pk:
+            return self.instance.fecha
         if fecha and fecha > timezone.now() + timedelta(minutes=5):
             raise forms.ValidationError('La fecha no puede estar en el futuro.')
         return fecha
-
-    def clean_procedimiento(self):
-        procedimiento = (self.cleaned_data.get('procedimiento') or '').strip()
-        if len(procedimiento) < 3:
-            raise forms.ValidationError('La descripcion del tratamiento es obligatoria.')
-        return procedimiento
-
-    def clean_foto(self):
-        foto = self.cleaned_data.get('foto')
-        if not foto:
-            return foto
-
-        if foto.size > MAX_UPLOAD_BYTES:
-            raise forms.ValidationError('La foto principal supera el limite de 10 MB.')
-
-        if not getattr(foto, 'content_type', '').startswith('image/'):
-            raise forms.ValidationError('Solo se permiten imagenes en la foto principal.')
-
-        return foto

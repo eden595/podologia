@@ -1,0 +1,6 @@
+[28/Feb/2026 17:55:28] "GET / HTTP/1.1" 302 0
+[28/Feb/2026 17:55:28] "GET /accounts/login/?next=/ HTTP/1.1" 200 35918
+[28/Feb/2026 17:56:12] "GET /pacientes/administrar/ HTTP/1.1" 200 55556
+[28/Feb/2026 17:56:29] "GET /paciente/detalle/16/ HTTP/1.1" 200 178917
+[28/Feb/2026 18:00:01] "GET /pacientes/administrar/?per_page=20 HTTP/1.1" 200 55724
+[28/Feb/2026 18:00:04] "GET /pacientes/administrar/?per_page=10 HTTP/1.1" 200 55556
