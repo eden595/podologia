@@ -11,6 +11,7 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.core.cache import cache
 from django.db.models import Prefetch, Q
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -290,6 +291,10 @@ def _conteo_tratamientos_dia_local(fecha_local):
     return _conteo_tratamientos_rango_fechas_local(fecha_local, fecha_local)
 
 
+def health_check(request):
+    return JsonResponse({'status': 'ok'})
+
+
 class DashboardView(LoginRequiredMixin, ListView):
     model = Paciente
     template_name = 'pacientes/lista_pacientes.html'
@@ -304,23 +309,30 @@ class DashboardView(LoginRequiredMixin, ListView):
         context = super().get_context_data(**kwargs)
         hoy = timezone.localdate()
         inicio_7_dias = hoy - timedelta(days=6)
+        cache_key = f'dashboard_metrics:{hoy.isoformat()}'
+        metrics = cache.get(cache_key)
 
-        conteo_procedimientos = Counter()
-        procedimientos_registrados = Tratamiento.objects.values_list('procedimiento', flat=True)
-        for procedimiento in procedimientos_registrados:
-            seleccionados, _ = _descomponer_procedimiento_registrado(procedimiento)
-            for item in seleccionados:
-                conteo_procedimientos[item] += 1
+        if metrics is None:
+            conteo_procedimientos = Counter()
+            procedimientos_registrados = Tratamiento.objects.values_list('procedimiento', flat=True)
+            for procedimiento in procedimientos_registrados:
+                seleccionados, _ = _descomponer_procedimiento_registrado(procedimiento)
+                for item in seleccionados:
+                    conteo_procedimientos[item] += 1
 
-        procedimientos_ordenados = conteo_procedimientos.most_common()
-        etiquetas_chart = [nombre for nombre, _ in procedimientos_ordenados]
-        valores_chart = [cantidad for _, cantidad in procedimientos_ordenados]
+            procedimientos_ordenados = conteo_procedimientos.most_common()
+            metrics = {
+                'tratamientos_7_dias': _conteo_tratamientos_rango_fechas_local(inicio_7_dias, hoy),
+                'tratamientos_chart_labels': [nombre for nombre, _ in procedimientos_ordenados],
+                'tratamientos_chart_values': [cantidad for _, cantidad in procedimientos_ordenados],
+            }
+            cache.set(cache_key, metrics, 60)
 
-        context['ultimos_pacientes'] = Paciente.objects.order_by('-id')[:6]
-        context['tratamientos_7_dias'] = _conteo_tratamientos_rango_fechas_local(inicio_7_dias, hoy)
-        context['tratamientos_chart_labels'] = etiquetas_chart
-        context['tratamientos_chart_values'] = valores_chart
-        context['tratamientos_chart_total'] = sum(valores_chart)
+        context['ultimos_pacientes'] = Paciente.objects.only('id', 'nombre', 'rut').order_by('-id')[:6]
+        context['tratamientos_7_dias'] = metrics['tratamientos_7_dias']
+        context['tratamientos_chart_labels'] = metrics['tratamientos_chart_labels']
+        context['tratamientos_chart_values'] = metrics['tratamientos_chart_values']
+        context['tratamientos_chart_total'] = sum(metrics['tratamientos_chart_values'])
         return context
 
 

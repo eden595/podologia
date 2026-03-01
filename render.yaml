@@ -1,0 +1,8 @@
+services:
+  - type: web
+    name: podologia
+    env: python
+    rootDir: podologia_project
+    buildCommand: ./build.sh
+    startCommand: gunicorn podologia_project.wsgi:application --workers 1 --threads 4 --timeout 120
+    healthCheckPath: /healthz/

@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 set -o errexit
 
-python -m pip install --upgrade pip
-python -m pip install -r requirements.render.txt
-python manage.py collectstatic --noinput
-python manage.py migrate --noinput
+python3 -m pip install -r requirements.render.txt
+python3 manage.py collectstatic --noinput
+python3 manage.py migrate --noinput
