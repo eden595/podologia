@@ -3,16 +3,52 @@
 {% block page_title %}Ficha Clinica{% endblock %}
 
 {% block topbar_actions %}
-<a href="{% url 'registrar_tratamiento' paciente.pk %}" class="btn btn-primary">
+<a href="{% url 'registrar_tratamiento' paciente.pk %}" class="btn btn-primary topbar-new-visit-btn">
     <span class="material-symbols-outlined">medical_information</span>
     Nueva Atencion
 </a>
 {% endblock %}
 
 {% block content %}
-<section class="page-header" style="display: flex; gap: 12px; align-items: center; justify-content: space-between; flex-wrap: wrap;">
-    <div style="display: flex; align-items: center; gap: 12px;">
-        <a href="{% url 'lista_pacientes' %}" class="btn btn-outline" style="padding-inline: 12px;">
+<style>
+    .patient-head {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+    }
+
+    .patient-head-main {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        min-width: 0;
+    }
+
+    .patient-back-btn {
+        padding-inline: 12px;
+    }
+
+    @media (max-width: 900px) {
+        .topbar-new-visit-btn {
+            width: 100%;
+            justify-content: center;
+        }
+
+        .patient-head {
+            align-items: flex-start;
+        }
+
+        .patient-head-main {
+            width: 100%;
+        }
+    }
+</style>
+
+<section class="page-header patient-head">
+    <div class="patient-head-main">
+        <a href="{% url 'lista_pacientes' %}" class="btn btn-outline patient-back-btn">
             <span class="material-symbols-outlined">arrow_back</span>
         </a>
         <div>
@@ -83,7 +119,7 @@
     <div class="form-panel">
         <div class="timeline">
             {% for item in historial %}
-            <article class="timeline-item timeline-compact-card">
+            <article class="timeline-item timeline-compact-card" id="tratamiento-{{ item.pk }}">
                 <div class="timeline-card-header">
                     <div class="timeline-card-header-main">
                         <div class="timeline-card-icon">

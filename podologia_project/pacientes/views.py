@@ -454,7 +454,7 @@ def detalle_paciente(request, pk):
     historial = list(
         Tratamiento.objects.filter(paciente=paciente)
         .prefetch_related('fotos_tratamiento')
-        .order_by('-fecha')
+        .order_by('-fecha', '-id')
     )
     for item in historial:
         item.procedimiento_mostrable, item.notas_procedimiento = _resumen_procedimiento_mostrable(item.procedimiento)
@@ -635,7 +635,8 @@ def registrar_tratamiento(request, pk):
             )
 
         messages.success(request, 'Tratamiento registrado correctamente.')
-        return redirect('detalle_paciente', pk=paciente.pk)
+        detalle_url = reverse('detalle_paciente', kwargs={'pk': paciente.pk})
+        return redirect(f'{detalle_url}#tratamiento-{nuevo_tratamiento.pk}')
 
     return render(
         request,

@@ -18,3 +18,8 @@ ENV/
 .env
 .env.*
 !.env.example
+podologia_project/.venv/
+podologia_project/venv/
+__pycache__/
+*.pyc
+*.log

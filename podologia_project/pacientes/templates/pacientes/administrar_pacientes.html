@@ -4,7 +4,7 @@
 {% block page_subtitle %}Busqueda, gestion de ficha y seguimiento de tratamientos{% endblock %}
 
 {% block topbar_actions %}
-<a href="{% url 'crear_paciente' %}" class="btn btn-primary">
+<a href="{% url 'crear_paciente' %}" class="btn btn-primary btn-top-create">
     <span class="material-icons-round me-1">person_add</span>
     Nuevo paciente
 </a>
@@ -152,6 +152,92 @@
         overflow-x: auto;
     }
 
+    .mobile-list {
+        display: none;
+        padding: 12px;
+        gap: 10px;
+    }
+
+    .mobile-card {
+        border-radius: 16px;
+        border: 1px solid rgba(112, 130, 255, 0.18);
+        background: rgba(12, 18, 36, 0.62);
+        padding: 12px;
+        display: grid;
+        gap: 10px;
+    }
+
+    .mobile-card-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .mobile-card-name {
+        font-weight: 700;
+        line-height: 1.3;
+    }
+
+    .mobile-card-sub {
+        color: var(--muted);
+        font-size: 12px;
+        margin-top: 3px;
+        line-height: 1.3;
+    }
+
+    .mobile-meta {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+    }
+
+    .mobile-meta-item {
+        border-radius: 12px;
+        border: 1px solid rgba(112, 130, 255, 0.15);
+        background: rgba(9, 15, 31, 0.62);
+        padding: 8px 10px;
+        min-width: 0;
+    }
+
+    .mobile-meta-label {
+        color: var(--muted);
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+    }
+
+    .mobile-meta-value {
+        margin-top: 3px;
+        line-height: 1.35;
+        font-size: 13px;
+        word-break: break-word;
+    }
+
+    .mobile-chip-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+
+    .mobile-actions {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+    }
+
+    .mobile-actions .btn-action {
+        text-align: center;
+        justify-content: center;
+        display: inline-flex;
+        align-items: center;
+        min-height: 38px;
+    }
+
+    .mobile-actions .btn-view {
+        grid-column: span 2;
+    }
+
     .admin-table {
         width: 100%;
         border-collapse: collapse;
@@ -271,17 +357,114 @@
     }
 
     @media (max-width: 900px) {
+        .btn-top-create {
+            width: 100%;
+            justify-content: center;
+        }
+
+        .panel-head {
+            padding: 14px;
+        }
+
+        .toolbar {
+            padding: 12px 14px;
+            gap: 10px;
+        }
+
+        .toolbar-left,
+        .toolbar-right,
+        .toolbar-search {
+            width: 100%;
+        }
+
+        .toolbar-left {
+            align-items: stretch;
+        }
+
+        .toolbar-field {
+            width: 100%;
+        }
+
+        .toolbar-select {
+            width: 100%;
+            min-height: 42px;
+            font-size: 15px;
+        }
+
         .toolbar-search {
             min-width: 100%;
+            padding: 6px 7px 6px 10px;
         }
 
         .toolbar-right {
-            width: 100%;
             margin-left: 0;
+        }
+
+        .toolbar-search input {
+            font-size: 16px;
+        }
+
+        .btn-search {
+            min-height: 36px;
+            padding-inline: 12px;
+        }
+
+        .btn-clear {
+            width: 100%;
+            min-height: 38px;
+        }
+
+        .table-wrap {
+            display: none;
+        }
+
+        .mobile-list {
+            display: grid;
         }
 
         .actions {
             justify-content: flex-start;
+        }
+
+        .panel-footer {
+            padding: 12px 14px;
+        }
+
+        .pagination {
+            width: 100%;
+            justify-content: space-between;
+        }
+
+        .pagination .page-item {
+            flex: 1;
+        }
+
+        .pagination .page-link {
+            margin: 0 3px;
+            text-align: center;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+    }
+
+    @media (max-width: 520px) {
+        .mobile-meta {
+            grid-template-columns: minmax(0, 1fr);
+        }
+
+        .mobile-actions {
+            grid-template-columns: minmax(0, 1fr);
+        }
+
+        .mobile-actions .btn-view {
+            grid-column: span 1;
+        }
+
+        .stats-row {
+            grid-template-columns: minmax(0, 1fr);
+            gap: 10px;
+            margin-bottom: 14px;
         }
     }
 </style>
@@ -409,6 +592,65 @@
                 {% endfor %}
             </tbody>
         </table>
+    </div>
+
+    <div class="mobile-list">
+        {% for p in pacientes %}
+            <article class="mobile-card">
+                <div class="mobile-card-head">
+                    <div>
+                        <div class="mobile-card-name">{{ p.nombre }}</div>
+                        <div class="mobile-card-sub">{{ p.direccion|default:"Direccion no registrada" }}</div>
+                    </div>
+                    <span class="chip-soft">{{ p.rut|default:"Sin RUT" }}</span>
+                </div>
+
+                <div class="mobile-meta">
+                    <div class="mobile-meta-item">
+                        <div class="mobile-meta-label">Telefono</div>
+                        <div class="mobile-meta-value">{{ p.telefono|default:"Sin telefono" }}</div>
+                    </div>
+                    <div class="mobile-meta-item">
+                        <div class="mobile-meta-label">Procedimientos</div>
+                        <div class="mobile-meta-value">{{ p.total_procedimientos_realizados }} procedimiento(s)</div>
+                    </div>
+                    <div class="mobile-meta-item">
+                        <div class="mobile-meta-label">Ultima atencion</div>
+                        <div class="mobile-meta-value">
+                            {% with ultima=p.tratamientos_ordenados.0 %}
+                                {% if ultima %}
+                                    {{ ultima.fecha|date:"d/m/Y H:i" }}
+                                {% else %}
+                                    Sin atenciones
+                                {% endif %}
+                            {% endwith %}
+                        </div>
+                    </div>
+                    <div class="mobile-meta-item">
+                        <div class="mobile-meta-label">Condiciones</div>
+                        <div class="mobile-chip-row">
+                            {% if p.diabetes %}
+                                <span class="chip-soft danger">Diabetes</span>
+                            {% endif %}
+                            {% if p.hipertension %}
+                                <span class="chip-soft warn">Hipertension</span>
+                            {% endif %}
+                            {% if not p.diabetes and not p.hipertension %}
+                                <span class="chip-soft">Sin riesgo</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mobile-actions">
+                    <a href="{% url 'editar_paciente' p.pk %}" class="btn btn-action btn-edit">Editar ficha</a>
+                    <a href="{% url 'registrar_tratamiento' p.pk %}" class="btn btn-action btn-treatment">Nuevo tratamiento</a>
+                    <a href="{% url 'detalle_paciente' p.pk %}" class="btn btn-action btn-view">Ver ficha</a>
+                </div>
+            </article>
+        {% empty %}
+            <div class="empty-block">No se encontraron pacientes para ese criterio de busqueda.</div>
+        {% endfor %}
     </div>
 
     <div class="panel-footer">

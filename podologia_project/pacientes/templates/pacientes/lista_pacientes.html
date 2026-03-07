@@ -4,11 +4,11 @@
 {% block page_subtitle %}Seguimiento clinico y fichas activas{% endblock %}
 
 {% block topbar_actions %}
-<a href="{% url 'administrar_pacientes' %}" class="btn btn-outline-light">
+<a href="{% url 'administrar_pacientes' %}" class="btn btn-outline-light topbar-btn-secondary">
     <span class="material-icons-round me-1">table_view</span>
     Administrar pacientes
 </a>
-<a href="{% url 'crear_paciente' %}" class="btn btn-primary">
+<a href="{% url 'crear_paciente' %}" class="btn btn-primary topbar-btn-primary">
     <span class="material-icons-round me-1">add</span>
     Nuevo paciente
 </a>
@@ -74,6 +74,44 @@
         gap: 8px;
         font-size: 13px;
         color: var(--muted);
+    }
+
+    @media (max-width: 900px) {
+        .topbar-btn-secondary,
+        .topbar-btn-primary {
+            width: 100%;
+            justify-content: center;
+        }
+
+        .hero-card {
+            padding: 20px 18px;
+            min-height: 170px;
+        }
+
+        .summary-item {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .summary-item .d-flex {
+            width: 100%;
+            justify-content: space-between;
+        }
+
+        .chart-card {
+            padding: 16px;
+        }
+    }
+
+    @media (max-width: 520px) {
+        .chart-wrap {
+            min-height: 250px;
+        }
+
+        .summary-item .btn {
+            width: 100%;
+            justify-content: center;
+        }
     }
 </style>
 

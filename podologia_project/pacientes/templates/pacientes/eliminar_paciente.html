@@ -5,13 +5,49 @@
 {% block topbar_search %}{% endblock %}
 
 {% block topbar_actions %}
-<a href="{% url 'lista_pacientes' %}" class="btn btn-outline">
+<a href="{% url 'lista_pacientes' %}" class="btn btn-outline topbar-back-btn">
     <span class="material-symbols-outlined">arrow_back</span>
     Volver
 </a>
 {% endblock %}
 
 {% block content %}
+<style>
+    .confirm-copy-title {
+        font-size: 1.1rem;
+        font-weight: 700;
+        margin-bottom: 10px;
+    }
+
+    .confirm-copy-body {
+        color: var(--text-muted);
+        line-height: 1.6;
+        margin-bottom: 18px;
+    }
+
+    .confirm-actions {
+        justify-content: flex-end;
+    }
+
+    @media (max-width: 900px) {
+        .topbar-back-btn {
+            width: 100%;
+            justify-content: center;
+        }
+
+        .confirm-actions {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr);
+            gap: 8px;
+        }
+
+        .confirm-actions .btn {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+</style>
+
 <section class="panel confirm-card">
     <div class="panel-head">
         <div>
@@ -21,12 +57,12 @@
     </div>
 
     <div class="confirm-body">
-        <p style="font-size: 1.1rem; font-weight: 700; margin-bottom: 10px;">Deseas eliminar a {{ object.nombre }}?</p>
-        <p style="color: var(--text-muted); line-height: 1.6; margin-bottom: 18px;">
+        <p class="confirm-copy-title">Deseas eliminar a {{ object.nombre }}?</p>
+        <p class="confirm-copy-body">
             Se borrara su ficha y todo el historial clinico asociado, incluyendo tratamientos, fotos y firmas.
         </p>
 
-        <form method="post" class="inline-actions" style="justify-content: flex-end;">
+        <form method="post" class="inline-actions confirm-actions">
             {% csrf_token %}
             <a href="{% url 'lista_pacientes' %}" class="btn btn-outline">Cancelar</a>
             <button type="submit" class="btn btn-danger">
@@ -37,4 +73,3 @@
     </div>
 </section>
 {% endblock %}
-
