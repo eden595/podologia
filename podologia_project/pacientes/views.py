@@ -12,6 +12,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.cache import cache
+from django.db import DatabaseError, connection
 from django.db.models import Prefetch, Q
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -293,6 +294,17 @@ def _conteo_tratamientos_dia_local(fecha_local):
 
 def health_check(request):
     return JsonResponse({'status': 'ok'})
+
+
+def health_check_db(request):
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute('SELECT 1')
+            cursor.fetchone()
+    except DatabaseError:
+        return JsonResponse({'status': 'error', 'database': 'down'}, status=503)
+
+    return JsonResponse({'status': 'ok', 'database': 'up'})
 
 
 class DashboardView(LoginRequiredMixin, ListView):
