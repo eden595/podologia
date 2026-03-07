@@ -32,9 +32,9 @@
     .create-field{gap:10px}
     .create-field-head,.create-photo-footer-top,.create-signature-head,.create-actions{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
     .create-optional-chip{display:inline-flex;align-items:center;padding:6px 10px;border-radius:999px;border:1px solid rgba(101,224,191,.22);background:rgba(14,74,74,.28);color:#67dfc2;font-size:.74rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
-    .create-datetime-row{display:flex;gap:10px;align-items:stretch}
-    .create-datetime-row .input{flex:1;min-width:0}
-    .create-reset-btn{border:1px solid rgba(112,130,255,.24);background:rgba(10,17,34,.92);color:rgba(224,232,255,.84);border-radius:16px;padding:0 16px;font-size:.88rem;font-weight:600}
+    .create-datetime-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:stretch}
+    .create-datetime-row .input{width:100%;min-width:0;font-size:clamp(.9rem,3.8vw,1.05rem)}
+    .create-reset-btn{border:1px solid rgba(112,130,255,.24);background:rgba(10,17,34,.92);color:rgba(224,232,255,.84);border-radius:16px;padding:0 16px;font-size:.88rem;font-weight:600;white-space:nowrap}
     .create-reset-btn:hover{border-color:rgba(111,183,255,.4)}
     .create-field-hint,.create-status-note,.create-photo-note{margin:0;color:rgba(174,192,232,.6);font-size:.84rem;line-height:1.5}
     .create-field-hint strong{color:rgba(236,242,255,.88)}
@@ -68,7 +68,7 @@
     .create-submit-btn{min-width:250px;justify-content:center;border-radius:16px;padding:14px 18px}
     @media (max-width:1200px){.create-grid-top,.create-signature-grid{grid-template-columns:minmax(0,1fr)}}
     @media (max-width:900px){.create-hero{flex-direction:column}.create-patient-summary{justify-items:start;padding-top:0}.create-patient-name{text-align:left}.create-card-head,.create-card-body{padding-left:20px;padding-right:20px}.create-procedure-grid{grid-template-columns:minmax(0,1fr)}}
-    @media (max-width:640px){.create-shell,.create-form{gap:22px}.create-card-head,.create-card-body{padding-left:16px;padding-right:16px}.create-datetime-row,.create-actions{flex-direction:column;align-items:stretch}.create-reset-btn{min-height:42px}.create-photo-action{width:100%;justify-content:center;padding:8px 12px;border:1px solid rgba(112,130,255,.24);border-radius:12px;background:rgba(10,17,34,.72)}.create-signature-canvas{height:180px}.create-cancel-link,.create-submit-btn{width:100%;min-width:0;display:inline-flex;justify-content:center}}
+    @media (max-width:640px){.create-shell,.create-form{gap:22px}.create-card-head,.create-card-body{padding-left:16px;padding-right:16px}.create-actions{flex-direction:column;align-items:stretch}.create-reset-btn{min-height:42px}.create-photo-action{width:100%;justify-content:center;padding:8px 12px;border:1px solid rgba(112,130,255,.24);border-radius:12px;background:rgba(10,17,34,.72)}.create-signature-canvas{height:180px}.create-cancel-link,.create-submit-btn{width:100%;min-width:0;display:inline-flex;justify-content:center}}
 </style>
 
 <section class="create-shell">
