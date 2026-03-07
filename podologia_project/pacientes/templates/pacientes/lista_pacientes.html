@@ -21,8 +21,8 @@
         overflow: hidden;
         padding: 26px 28px;
         min-height: 200px;
-        background: radial-gradient(280px 220px at 75% 20%, rgba(90, 211, 255, 0.45), transparent 60%),
-                    linear-gradient(145deg, rgba(33, 46, 92, 0.95), rgba(17, 24, 48, 0.95));
+        background: radial-gradient(280px 220px at 75% 20%, rgba(255, 136, 179, 0.38), transparent 60%),
+                    linear-gradient(145deg, rgba(65, 30, 87, 0.96), rgba(39, 17, 56, 0.96));
     }
 
     .hero-card::after {
@@ -32,7 +32,7 @@
         height: 240px;
         right: -60px;
         top: -60px;
-        background: radial-gradient(circle, rgba(90, 211, 255, 0.4), transparent 70%);
+        background: radial-gradient(circle, rgba(255, 136, 179, 0.34), transparent 70%);
         filter: blur(2px);
     }
 
@@ -48,8 +48,8 @@
         gap: 12px;
         padding: 12px 14px;
         border-radius: 16px;
-        background: rgba(12, 18, 36, 0.85);
-        border: 1px solid rgba(108, 130, 255, 0.16);
+        background: rgba(36, 16, 52, 0.86);
+        border: 1px solid rgba(255, 146, 190, 0.16);
     }
 
     .chart-card {
@@ -209,16 +209,12 @@
 
             function buildPalette(count) {
                 var base = [
-                    '#5ad3ff',
-                    '#6f7cff',
-                    '#25f0ff',
-                    '#63e6be',
-                    '#f9c74f',
-                    '#f9844a',
-                    '#f94144',
-                    '#c77dff',
-                    '#90be6d',
-                    '#43aa8b'
+                    '#ea6a97',
+                    '#ff889f',
+                    '#a98ac7',
+                    '#e8c44f',
+                    '#d877a6',
+                    '#f29b7f'
                 ];
 
                 if (count <= base.length) {
@@ -228,7 +224,7 @@
                 var colors = base.slice();
                 for (var i = base.length; i < count; i += 1) {
                     var hue = Math.round((360 / count) * i);
-                    colors.push('hsl(' + hue + ', 78%, 62%)');
+                    colors.push('hsl(' + hue + ', 72%, 62%)');
                 }
                 return colors;
             }
@@ -242,7 +238,7 @@
                     datasets: [{
                         data: values,
                         backgroundColor: colors,
-                        borderColor: 'rgba(11, 16, 31, 0.95)',
+                        borderColor: 'rgba(30, 12, 42, 0.96)',
                         borderWidth: 2,
                         hoverOffset: 8
                     }]
@@ -254,17 +250,17 @@
                         legend: {
                             position: 'bottom',
                             labels: {
-                                color: '#dce8ff',
+                                color: '#f6e8f2',
                                 padding: 14,
                                 usePointStyle: true,
                                 pointStyle: 'circle'
                             }
                         },
                         tooltip: {
-                            backgroundColor: 'rgba(8, 14, 28, 0.95)',
-                            titleColor: '#f5f9ff',
-                            bodyColor: '#dce8ff',
-                            borderColor: 'rgba(90, 211, 255, 0.35)',
+                            backgroundColor: 'rgba(30, 12, 42, 0.95)',
+                            titleColor: '#fff6fb',
+                            bodyColor: '#f6e8f2',
+                            borderColor: 'rgba(255, 146, 190, 0.35)',
                             borderWidth: 1
                         }
                     }
