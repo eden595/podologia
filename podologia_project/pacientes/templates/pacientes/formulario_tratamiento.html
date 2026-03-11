@@ -89,8 +89,6 @@
 
     <form method="POST" enctype="multipart/form-data" id="tratamientoForm" class="create-form" novalidate>
         {% csrf_token %}
-        <input type="hidden" name="foto_principal_directa" id="foto_principal_directa">
-        <input type="hidden" name="fotos_extra_directas" id="fotos_extra_directas">
 
         <div class="create-grid-top">
             <section class="panel create-card">
@@ -226,7 +224,6 @@
 
 {% block extra_js %}
 <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
-{% include "pacientes/includes/cloudinary_direct_upload.html" %}
 <script>
     (function () {
         var form = document.getElementById('tratamientoForm');
@@ -238,10 +235,6 @@
         var fileChosen = document.getElementById('file-chosen');
         var selectedPhotosWrap = document.getElementById('selected-photos-wrap');
         var selectedPhotosEmpty = document.getElementById('selected-photos-empty');
-        var submitButton = form.querySelector('button[type="submit"]');
-        var directUploadsEnabled = {{ cloudinary_direct_uploads|yesno:"true,false" }};
-        var signatureUrl = '{{ cloudinary_signature_url }}';
-        var isUploadingDirect = false;
 
         function setCurrentDateTime() {
             var fechaInput = document.getElementById('id_fecha');
@@ -367,73 +360,8 @@
             });
         }
 
-        form.addEventListener('submit', async function (event) {
-            if (isUploadingDirect) {
-                event.preventDefault();
-                return;
-            }
-
+        form.addEventListener('submit', function () {
             setSignatureField();
-
-            var selectedFiles = fileInput ? Array.from(fileInput.files) : [];
-            if (!directUploadsEnabled || !selectedFiles.length) {
-                return;
-            }
-
-            event.preventDefault();
-            isUploadingDirect = true;
-            submitButton.disabled = true;
-            submitButton.innerHTML = '<span class="material-symbols-outlined">cloud_upload</span>Subiendo fotos...';
-
-            try {
-                var fotoPrincipal = selectedFiles.slice(0, 1);
-                var fotosExtra = selectedFiles.slice(1);
-
-                var fotoPrincipalSubida = await window.CloudinaryDirectUploads.uploadFiles(
-                    fotoPrincipal,
-                    'tratamiento_principal',
-                    signatureUrl,
-                    {
-                        onProgress: function (done, total) {
-                            if (fileChosen) {
-                                fileChosen.textContent = 'Subiendo foto principal ' + done + '/' + total + '...';
-                            }
-                        }
-                    }
-                );
-
-                var fotosExtraSubidas = await window.CloudinaryDirectUploads.uploadFiles(
-                    fotosExtra,
-                    'tratamiento_extra',
-                    signatureUrl,
-                    {
-                        onProgress: function (done, total) {
-                            if (fileChosen) {
-                                fileChosen.textContent = 'Subiendo fotos ' + done + '/' + total + '...';
-                            }
-                        }
-                    }
-                );
-
-                document.getElementById('foto_principal_directa').value = JSON.stringify(fotoPrincipalSubida[0] || null);
-                document.getElementById('fotos_extra_directas').value = JSON.stringify(fotosExtraSubidas);
-
-                if (fileInput) {
-                    fileInput.value = '';
-                }
-                if (fileChosen) {
-                    fileChosen.textContent = 'Fotos listas para guardar.';
-                }
-
-                HTMLFormElement.prototype.submit.call(form);
-            } catch (error) {
-                isUploadingDirect = false;
-                submitButton.disabled = false;
-                submitButton.innerHTML = '<span class="material-symbols-outlined">save</span>Registrar Atencion';
-                if (fileChosen) {
-                    fileChosen.textContent = error.message || 'No se pudo subir una de las fotos.';
-                }
-            }
         });
     })();
 </script>

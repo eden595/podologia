@@ -97,7 +97,6 @@
 
     <form method="POST" enctype="multipart/form-data" id="editForm" class="edit-form" novalidate>
         {% csrf_token %}
-        <input type="hidden" name="nuevas_fotos_extra_directas" id="nuevas_fotos_extra_directas">
 
         {% if form.errors %}
         <section class="panel">
@@ -267,7 +266,6 @@
 
 {% block extra_js %}
 <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
-{% include "pacientes/includes/cloudinary_direct_upload.html" %}
 <script>
     (function () {
         var form = document.getElementById('editForm');
@@ -279,9 +277,6 @@
         var fileInput = document.getElementById('actual-btn');
         var fileChosen = document.getElementById('file-chosen');
         var photoStrip = document.getElementById('photo-strip');
-        var directUploadsEnabled = {{ cloudinary_direct_uploads|yesno:"true,false" }};
-        var signatureUrl = '{{ cloudinary_signature_url }}';
-        var isUploadingDirect = false;
 
         function ensureEmptyState() {
             var cards = photoStrip ? photoStrip.querySelectorAll('.edit-photo-card') : [];
@@ -439,59 +434,8 @@
             });
         }
 
-        var submitButton = form.querySelector('button[type="submit"]');
-
-        form.addEventListener('submit', async function (event) {
-            if (isUploadingDirect) {
-                event.preventDefault();
-                return;
-            }
-
+        form.addEventListener('submit', function () {
             setSignatureField();
-
-            var extraFiles = fileInput ? Array.from(fileInput.files) : [];
-            if (!directUploadsEnabled || !extraFiles.length) {
-                return;
-            }
-
-            event.preventDefault();
-            isUploadingDirect = true;
-            submitButton.disabled = true;
-            submitButton.innerHTML = '<span class="material-symbols-outlined">cloud_upload</span>Subiendo fotos...';
-
-            try {
-                var extraUploads = await window.CloudinaryDirectUploads.uploadFiles(
-                    extraFiles,
-                    'tratamiento_extra',
-                    signatureUrl,
-                    {
-                        onProgress: function (done, total) {
-                            if (fileChosen) {
-                                fileChosen.textContent = 'Subiendo fotos ' + done + '/' + total + '...';
-                            }
-                        }
-                    }
-                );
-
-                document.getElementById('nuevas_fotos_extra_directas').value = JSON.stringify(extraUploads);
-
-                if (fileInput) {
-                    fileInput.value = '';
-                }
-
-                if (fileChosen && extraUploads.length) {
-                    fileChosen.textContent = extraUploads.length + ' foto(s) lista(s) para guardar.';
-                }
-
-                HTMLFormElement.prototype.submit.call(form);
-            } catch (error) {
-                isUploadingDirect = false;
-                submitButton.disabled = false;
-                submitButton.innerHTML = '<span class="material-symbols-outlined">save</span>Guardar Cambios';
-                if (fileChosen) {
-                    fileChosen.textContent = error.message || 'No se pudo subir una de las fotos.';
-                }
-            }
         });
     })();
 </script>

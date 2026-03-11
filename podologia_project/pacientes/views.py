@@ -1,13 +1,8 @@
 from collections import Counter
 from datetime import datetime, time, timedelta
-import json
 import re
-import time as time_module
 import unicodedata
 
-import cloudinary
-from cloudinary.utils import api_sign_request
-from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -28,10 +23,6 @@ from .models import FotoTratamiento, Paciente, Tratamiento, borrar_archivo_stora
 MAX_IMAGENES_POR_TRATAMIENTO = 10
 MAX_IMAGEN_BYTES = 10 * 1024 * 1024
 MAX_OTROS_CHARS = 1200
-DIRECT_UPLOAD_FOLDERS = {
-    'tratamiento_principal': 'media/tratamientos',
-    'tratamiento_extra': 'media/tratamientos_extra',
-}
 
 PROCEDIMIENTOS_SELECCIONABLES = [
     'ONICOTOMIA',
@@ -209,62 +200,7 @@ def _contexto_form_tratamiento(paciente, seleccionados=None, otros='', fecha='')
         'otros_previos': otros or '',
         'fecha_previo': fecha or '',
         'procedimientos_disponibles': PROCEDIMIENTOS_SELECCIONABLES,
-        **_contexto_cloudinary_uploads(),
     }
-
-
-def _usa_cloudinary_storage():
-    try:
-        backend = settings.STORAGES['default']['BACKEND']
-    except Exception:
-        return False
-    return backend == 'cloudinary_storage.storage.MediaCloudinaryStorage'
-
-
-def _contexto_cloudinary_uploads():
-    return {
-        'cloudinary_direct_uploads': _usa_cloudinary_storage(),
-        'cloudinary_signature_url': reverse_lazy('cloudinary_upload_signature'),
-    }
-
-
-def _parse_direct_uploads(raw_value, upload_kind, *, multiple=True):
-    if not raw_value:
-        return [] if multiple else ''
-
-    try:
-        payload = json.loads(raw_value)
-    except json.JSONDecodeError as exc:
-        raise ValueError('No se pudo leer la respuesta de Cloudinary enviada por el navegador.') from exc
-
-    if payload is None:
-        return [] if multiple else ''
-
-    if multiple:
-        items = payload if isinstance(payload, list) else [payload]
-    else:
-        items = [payload]
-
-    folder = DIRECT_UPLOAD_FOLDERS.get(upload_kind, '')
-    resultados = []
-    for item in items:
-        if not isinstance(item, dict):
-            raise ValueError('El formato de una imagen subida no es valido.')
-
-        public_id = str(item.get('public_id', '')).strip()
-        resource_type = str(item.get('resource_type', 'image')).strip() or 'image'
-        if not public_id or resource_type != 'image':
-            raise ValueError('Cloudinary devolvio una imagen invalida para este formulario.')
-
-        if folder and not public_id.startswith(f'{folder}/'):
-            raise ValueError('Se detecto una carpeta de Cloudinary no permitida para la imagen subida.')
-
-        resultados.append(public_id)
-
-    if multiple:
-        return resultados
-    return resultados[0] if resultados else ''
-
 
 def _agregar_errores_formulario(request, form):
     for field_name, errores in form.errors.items():
@@ -507,41 +443,6 @@ def detalle_paciente(request, pk):
 
 
 @login_required
-@require_http_methods(['POST'])
-def cloudinary_upload_signature(request):
-    if not _usa_cloudinary_storage():
-        return JsonResponse({'detail': 'Cloudinary no esta habilitado en este entorno.'}, status=400)
-
-    upload_kind = (request.POST.get('kind') or '').strip()
-    folder = DIRECT_UPLOAD_FOLDERS.get(upload_kind)
-    if not folder:
-        return JsonResponse({'detail': 'Tipo de subida no permitido.'}, status=400)
-
-    config = cloudinary.config()
-    timestamp = int(time_module.time())
-    params = {
-        'folder': folder,
-        'timestamp': timestamp,
-        'unique_filename': 'true',
-        'use_filename': 'true',
-    }
-    signature = api_sign_request(params, config.api_secret)
-
-    return JsonResponse(
-        {
-            'api_key': config.api_key,
-            'cloud_name': config.cloud_name,
-            'folder': folder,
-            'signature': signature,
-            'timestamp': timestamp,
-            'unique_filename': 'true',
-            'upload_url': f'https://api.cloudinary.com/v1_1/{config.cloud_name}/image/upload',
-            'use_filename': 'true',
-        }
-    )
-
-
-@login_required
 @require_http_methods(['GET', 'POST'])
 def registrar_tratamiento(request, pk):
     paciente = get_object_or_404(Paciente, pk=pk)
@@ -560,28 +461,8 @@ def registrar_tratamiento(request, pk):
         otros = request.POST.get('otros_texto', '').strip()
         fecha_input = request.POST.get('fecha', '').strip()
         firma_base64 = request.POST.get('firma_base64', '').strip()
-        foto_principal_directa_raw = request.POST.get('foto_principal_directa', '').strip()
-        fotos_extra_directas_raw = request.POST.get('fotos_extra_directas', '').strip()
         imagenes_extra = request.FILES.getlist('fotos_extra')
         contexto_form = _contexto_form_tratamiento(paciente, seleccionados, otros, fecha_input)
-
-        try:
-            foto_principal_directa = _parse_direct_uploads(
-                foto_principal_directa_raw,
-                'tratamiento_principal',
-                multiple=False,
-            )
-            fotos_extra_directas = _parse_direct_uploads(
-                fotos_extra_directas_raw,
-                'tratamiento_extra',
-                multiple=True,
-            )
-        except ValueError as exc:
-            messages.error(request, str(exc))
-            return render(request, 'pacientes/formulario_tratamiento.html', contexto_form)
-
-        if foto_principal_directa or fotos_extra_directas:
-            imagenes_extra = [item for item in [foto_principal_directa, *fotos_extra_directas] if item]
 
         if not seleccionados and not otros:
             messages.error(request, 'Debes seleccionar al menos un procedimiento o escribir una nota.')
@@ -600,9 +481,6 @@ def registrar_tratamiento(request, pk):
             return render(request, 'pacientes/formulario_tratamiento.html', contexto_form)
 
         for imagen in imagenes_extra:
-            if isinstance(imagen, str):
-                continue
-
             if not getattr(imagen, 'content_type', '').startswith('image/'):
                 messages.error(request, f'El archivo "{imagen.name}" no es una imagen valida.')
                 return render(request, 'pacientes/formulario_tratamiento.html', contexto_form)
@@ -677,7 +555,6 @@ class TratamientoUpdateView(LoginRequiredMixin, UpdateView):
         else:
             tratamientos_previos, otros_previos = _descomponer_procedimiento_registrado(self.object.procedimiento)
 
-        context.update(_contexto_cloudinary_uploads())
         context['procedimientos_disponibles'] = PROCEDIMIENTOS_SELECCIONABLES
         context['tratamientos_previos'] = tratamientos_previos
         context['otros_previos'] = otros_previos
@@ -685,7 +562,6 @@ class TratamientoUpdateView(LoginRequiredMixin, UpdateView):
         return context
 
     def form_valid(self, form):
-        nuevas_fotos_directas_raw = self.request.POST.get('nuevas_fotos_extra_directas', '').strip()
         nuevas_imagenes = self.request.FILES.getlist('nuevas_fotos_extra')
 
         try:
@@ -706,29 +582,12 @@ class TratamientoUpdateView(LoginRequiredMixin, UpdateView):
             messages.error(self.request, 'No se pudieron guardar los cambios. Las notas son demasiado largas.')
             return self.form_invalid(form)
 
-        try:
-            nuevas_fotos_directas = _parse_direct_uploads(
-                nuevas_fotos_directas_raw,
-                'tratamiento_extra',
-                multiple=True,
-            )
-        except ValueError as exc:
-            form.add_error(None, str(exc))
-            messages.error(self.request, 'No se pudieron guardar los cambios. La carga directa no fue valida.')
-            return self.form_invalid(form)
-
-        if nuevas_fotos_directas:
-            nuevas_imagenes = nuevas_fotos_directas
-
         if len(nuevas_imagenes) > MAX_IMAGENES_POR_TRATAMIENTO:
             form.add_error(None, f'Puedes subir maximo {MAX_IMAGENES_POR_TRATAMIENTO} imagenes nuevas por edicion.')
             messages.error(self.request, 'No se pudieron guardar los cambios. Excediste el limite de imagenes.')
             return self.form_invalid(form)
 
         for imagen in nuevas_imagenes:
-            if isinstance(imagen, str):
-                continue
-
             if not getattr(imagen, 'content_type', '').startswith('image/'):
                 form.add_error(None, f'El archivo "{imagen.name}" no es una imagen valida.')
                 messages.error(self.request, 'No se pudieron guardar los cambios. Hay archivos invalidos.')

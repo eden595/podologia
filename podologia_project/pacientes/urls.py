@@ -11,7 +11,6 @@ urlpatterns = [
     path('paciente/detalle/<int:pk>/', views.detalle_paciente, name='detalle_paciente'),
     path('paciente/editar/<int:pk>/', views.PacienteUpdateView.as_view(), name='editar_paciente'),
     path('paciente/eliminar/<int:pk>/', views.PacienteDeleteView.as_view(), name='eliminar_paciente'),
-    path('api/cloudinary/signature/', views.cloudinary_upload_signature, name='cloudinary_upload_signature'),
     path('tratamiento/nuevo/<int:pk>/', views.registrar_tratamiento, name='registrar_tratamiento'),
     path('tratamiento/editar/<int:pk>/', views.TratamientoUpdateView.as_view(), name='editar_historial'),
     path('tratamiento/<int:pk>/foto-principal/eliminar/', views.eliminar_foto_principal, name='eliminar_foto_principal'),
