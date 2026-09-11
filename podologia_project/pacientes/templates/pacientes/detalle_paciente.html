@@ -53,7 +53,7 @@
         </a>
         <div>
             <h1 class="page-title">{{ paciente.nombre }}</h1>
-            <p class="page-description">RUT: {{ paciente.rut|default:"Sin RUT" }}</p>
+            <p class="page-description">RUT: {{ paciente.rut_formateado|default:"Sin RUT" }}</p>
         </div>
     </div>
 </section>
@@ -257,7 +257,7 @@
                             </span>
                             <span class="timeline-record-chip">
                                 <span class="material-symbols-outlined">badge</span>
-                                {{ paciente.rut|default:"Sin RUT" }}
+                                {{ paciente.rut_formateado|default:"Sin RUT" }}
                             </span>
                         </div>
                         <a href="{% url 'editar_historial' item.pk %}" class="timeline-record-link">Editar registro</a>

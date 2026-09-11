@@ -73,8 +73,29 @@ class Paciente(models.Model):
     alergias = models.TextField(blank=True, null=True, help_text='Ej: Penicilina')
     observaciones_medicas = models.TextField(blank=True, null=True)
 
+    @property
+    def rut_formateado(self):
+        import re
+        val = (self.rut or "").strip()
+        if not val:
+            return ""
+        if "." in val:
+            return val
+
+        limpio = re.sub(r"[^0-9kK]", "", val)
+        if 8 <= len(limpio) <= 9:
+            cuerpo = limpio[:-1]
+            dv = limpio[-1].upper()
+            try:
+                cuerpo_puntos = f"{int(cuerpo):,}".replace(",", ".")
+                return f"{cuerpo_puntos}-{dv}"
+            except ValueError:
+                pass
+        return val
+
     def __str__(self):
         return self.nombre
+
 
 
 class Tratamiento(models.Model):

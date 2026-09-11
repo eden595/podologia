@@ -1,4 +1,4 @@
-﻿{% extends "pacientes/base.html" %}
+{% extends "pacientes/base.html" %}
 
 {% block page_title %}{% if form.instance.pk %}Editar Paciente{% else %}Nuevo Paciente{% endif %}{% endblock %}
 
@@ -63,8 +63,8 @@
                     {% if form.nombre.errors %}<small class="text-danger">{{ form.nombre.errors|join:", " }}</small>{% endif %}
                 </div>
                 <div class="field">
-                    <label for="id_rut">RUT / DNI</label>
-                    <input id="id_rut" type="text" name="rut" class="input" placeholder="12.345.678-9" value="{{ form.rut.value|default_if_none:'' }}" required>
+                    <label for="id_rut">RUT / Pasaporte / DNI</label>
+                    <input id="id_rut" type="text" name="rut" class="input" placeholder="12.345.678-9, Pasaporte o RUT provisorio" value="{{ form.rut.value|default_if_none:'' }}" required>
                     {% if form.rut.errors %}<small class="text-danger">{{ form.rut.errors|join:", " }}</small>{% endif %}
                 </div>
                 <div class="field">

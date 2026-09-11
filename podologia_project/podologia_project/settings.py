@@ -21,7 +21,11 @@ env = environ.Env(
     DB_CONN_MAX_AGE=(int, 60),
 )
 
-environ.Env.read_env(BASE_DIR / ".env")
+if (BASE_DIR / ".env").exists():
+    environ.Env.read_env(BASE_DIR / ".env")
+elif (BASE_DIR.parent / ".env").exists():
+    environ.Env.read_env(BASE_DIR.parent / ".env")
+
 
 DEBUG = env.bool("DJANGO_DEBUG", default=False)
 

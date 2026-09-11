@@ -6,20 +6,12 @@ from django.utils import timezone
 
 from .models import Paciente, Tratamiento
 
-RUT_REGEX = re.compile(r"^\d{7,8}-[\dkK]$")
+STANDARD_RUT_REGEX = re.compile(r"^\d{7,8}-[\dkK]$")
 PHONE_REGEX = re.compile(r"^[0-9+()\-\s]{8,20}$")
 
 
 def _normalizar_espacios(valor: str) -> str:
     return " ".join((valor or "").split())
-
-
-def _normalizar_rut(valor: str) -> str:
-    bruto = re.sub(r"[^0-9kK]", "", (valor or ""))
-    if len(bruto) < 8:
-        return bruto
-    cuerpo, dv = bruto[:-1], bruto[-1].upper()
-    return f"{cuerpo}-{dv}"
 
 
 def _digito_verificador_rut(cuerpo: str) -> str:
@@ -43,7 +35,7 @@ class PacienteForm(forms.ModelForm):
         fields = '__all__'
         widgets = {
             'nombre': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nombre completo'}),
-            'rut': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ej: [REDACTED_DB_PASSWORD]-9'}),
+            'rut': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ej: 12.345.678-9, Pasaporte o RUT provisorio'}),
             'telefono': forms.TextInput(attrs={'class': 'form-control'}),
             'direccion': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Calle, Número, Comuna'}),
             'alergias': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
@@ -57,16 +49,29 @@ class PacienteForm(forms.ModelForm):
         return nombre
 
     def clean_rut(self):
-        rut = _normalizar_rut(self.cleaned_data.get('rut', ''))
-        if not RUT_REGEX.fullmatch(rut):
-            raise forms.ValidationError('Formato de RUT invalido. Usa [REDACTED_DB_PASSWORD]-9 o [REDACTED_DB_PASSWORD]-K.')
+        raw_rut = (self.cleaned_data.get('rut') or '').strip().upper()
+        # Eliminar caracteres no permitidos en documentos
+        limpio = re.sub(r'[^A-Z0-9\-\.]', '', raw_rut)
 
-        cuerpo, dv = rut.split('-')
-        dv_esperado = _digito_verificador_rut(cuerpo)
-        if dv.upper() != dv_esperado:
-            raise forms.ValidationError('RUT invalido: digito verificador incorrecto.')
+        if not limpio or len(limpio) < 3:
+            raise forms.ValidationError('Ingresa un RUT, DNI o Pasaporte valido (minimo 3 caracteres).')
 
-        return rut.upper()
+        if len(limpio) > 15:
+            raise forms.ValidationError('El documento no puede superar los 15 caracteres.')
+
+        # Intentar formatear como RUT chileno tradicional si solo contiene digitos y/o K
+        solo_numeros_k = re.sub(r'[^0-9K]', '', limpio)
+        if 8 <= len(solo_numeros_k) <= 9:
+            cuerpo = solo_numeros_k[:-1]
+            dv = solo_numeros_k[-1]
+            dv_esperado = _digito_verificador_rut(cuerpo)
+            if dv == dv_esperado:
+                cuerpo_puntos = f"{int(cuerpo):,}".replace(",", ".")
+                return f"{cuerpo_puntos}-{dv}"
+
+
+        return limpio
+
 
     def clean_telefono(self):
         telefono = _normalizar_espacios(self.cleaned_data.get('telefono', ''))

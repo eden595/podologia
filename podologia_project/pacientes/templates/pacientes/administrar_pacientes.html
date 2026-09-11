@@ -1,4 +1,4 @@
-﻿{% extends "pacientes/base.html" %}
+{% extends "pacientes/base.html" %}
 
 {% block page_title %}Administrar Pacientes{% endblock %}
 {% block page_subtitle %}Busqueda, gestion de ficha y seguimiento de tratamientos{% endblock %}
@@ -544,7 +544,7 @@
             <tbody>
                 {% for p in pacientes %}
                 <tr>
-                    <td><span class="chip-soft">{{ p.rut|default:"Sin RUT" }}</span></td>
+                    <td><span class="chip-soft">{{ p.rut_formateado|default:"Sin RUT" }}</span></td>
                     <td>
                         <div class="patient-cell">
                             <div class="patient-avatar">
@@ -610,7 +610,7 @@
                         <div class="mobile-card-name">{{ p.nombre }}</div>
                         <div class="mobile-card-sub">{{ p.direccion|default:"Direccion no registrada" }}</div>
                     </div>
-                    <span class="chip-soft">{{ p.rut|default:"Sin RUT" }}</span>
+                    <span class="chip-soft">{{ p.rut_formateado|default:"Sin RUT" }}</span>
                 </div>
 
                 <div class="mobile-meta">

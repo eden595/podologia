@@ -1,4 +1,4 @@
-﻿{% extends "pacientes/base.html" %}
+{% extends "pacientes/base.html" %}
 
 {% block page_title %}Gestion de Pacientes{% endblock %}
 {% block page_subtitle %}Seguimiento clinico y fichas activas{% endblock %}
@@ -168,7 +168,7 @@
             <div class="summary-item">
                 <div>
                     <div class="fw-semibold text-truncate">{{ p.nombre }}</div>
-                    <div class="text-secondary small">{{ p.rut|default:"Sin RUT" }}</div>
+                    <div class="text-secondary small">{{ p.rut_formateado|default:"Sin RUT" }}</div>
                 </div>
                 <div class="d-flex align-items-center gap-2">
                     <span class="text-secondary small">#{{ p.pk }}</span>
