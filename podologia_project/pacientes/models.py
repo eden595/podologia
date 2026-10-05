@@ -12,32 +12,46 @@ from django.utils import timezone
 DELETE_EXECUTOR = ThreadPoolExecutor(max_workers=4)
 
 
-def comprimir_imagen(image_field, quality=90):
+def comprimir_imagen(image_field, quality=85):
+    if not image_field:
+        return image_field
     try:
+        Image.MAX_IMAGE_PIXELS = 100_000_000
         img = Image.open(image_field)
+        try:
+            img = ImageOps.exif_transpose(img)
 
-        img = ImageOps.exif_transpose(img)
+            if img.mode in ('RGBA', 'LA') or (img.mode == 'P' and 'transparency' in img.info):
+                background = Image.new('RGB', img.size, (255, 255, 255))
+                if img.mode == 'P':
+                    img = img.convert('RGBA')
+                background.paste(img, mask=img.split()[-1] if img.mode in ('RGBA', 'LA') else None)
+                img = background
+            elif img.mode != 'RGB':
+                img = img.convert('RGB')
 
-        if img.mode != 'RGB':
-            img = img.convert('RGB')
+            max_dimension = 1600
+            if img.width > max_dimension or img.height > max_dimension:
+                img.thumbnail((max_dimension, max_dimension), Image.Resampling.LANCZOS)
 
-        max_width = 1920
-        if img.width > max_width:
-            output_size = (max_width, int(max_width * img.height / img.width))
-            img.thumbnail(output_size, Image.Resampling.LANCZOS)
+            output = BytesIO()
+            img.save(output, format='JPEG', quality=quality, optimize=True)
+            output.seek(0)
 
-        output = BytesIO()
-        img.save(output, format='JPEG', quality=quality, optimize=True)
-        output.seek(0)
-
-        return InMemoryUploadedFile(
-            output,
-            'ImageField',
-            f"{image_field.name.split('.')[0]}.jpg",
-            'image/jpeg',
-            output.getbuffer().nbytes,
-            None,
-        )
+            base_name = image_field.name.rsplit('.', 1)[0] if image_field.name else 'imagen'
+            return InMemoryUploadedFile(
+                output,
+                'ImageField',
+                f"{base_name}.jpg",
+                'image/jpeg',
+                output.getbuffer().nbytes,
+                None,
+            )
+        finally:
+            try:
+                img.close()
+            except Exception:
+                pass
     except Exception as exc:
         print(f"Error al comprimir imagen: {exc}")
         return image_field

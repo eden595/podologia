@@ -370,11 +370,75 @@
             });
         }
 
+        function compressImageFile(file, maxWidth, quality) {
+            maxWidth = maxWidth || 1600;
+            quality = quality || 0.82;
+            if (!file || (!file.type.startsWith('image/') && !/\.(heic|heif|png|jpg|jpeg|webp|bmp)$/i.test(file.name))) {
+                return Promise.resolve(file);
+            }
+            return new Promise(function (resolve) {
+                var reader = new FileReader();
+                reader.onload = function (e) {
+                    var img = new Image();
+                    img.onload = function () {
+                        var w = img.width;
+                        var h = img.height;
+                        if (w > maxWidth || h > maxWidth) {
+                            if (w > h) {
+                                h = Math.round((h * maxWidth) / w);
+                                w = maxWidth;
+                            } else {
+                                w = Math.round((w * maxWidth) / h);
+                                h = maxWidth;
+                            }
+                        }
+                        var canvas = document.createElement('canvas');
+                        canvas.width = w;
+                        canvas.height = h;
+                        var ctx = canvas.getContext('2d');
+                        ctx.fillStyle = '#FFFFFF';
+                        ctx.fillRect(0, 0, w, h);
+                        ctx.drawImage(img, 0, 0, w, h);
+                        canvas.toBlob(function (blob) {
+                            if (!blob) {
+                                resolve(file);
+                                return;
+                            }
+                            var cleanName = (file.name || 'foto').replace(/\.[^/.]+$/, '') + '.jpg';
+                            var newFile = new File([blob], cleanName, { type: 'image/jpeg', lastModified: Date.now() });
+                            resolve(newFile);
+                        }, 'image/jpeg', quality);
+                    };
+                    img.onerror = function () { resolve(file); };
+                    img.src = e.target.result;
+                };
+                reader.onerror = function () { resolve(file); };
+                reader.readAsDataURL(file);
+            });
+        }
+
         if (fileInput && fileChosen) {
-            fileInput.addEventListener('change', function () {
-                fileChosen.textContent = this.files.length
-                    ? this.files.length + ' foto(s) nueva(s) lista(s) para guardar.'
-                    : 'Ningun archivo nuevo seleccionado.';
+            fileInput.addEventListener('change', async function () {
+                var files = Array.from(this.files || []);
+                if (!files.length) {
+                    fileChosen.textContent = 'Ningun archivo nuevo seleccionado.';
+                    return;
+                }
+
+                fileChosen.textContent = 'Optimizando ' + files.length + ' foto(s)...';
+                var compressedFiles = [];
+                for (var i = 0; i < files.length; i++) {
+                    var comp = await compressImageFile(files[i]);
+                    compressedFiles.push(comp);
+                }
+
+                if (window.DataTransfer) {
+                    var dt = new DataTransfer();
+                    compressedFiles.forEach(function (f) { dt.items.add(f); });
+                    fileInput.files = dt.files;
+                }
+
+                fileChosen.textContent = compressedFiles.length + ' foto(s) optimizada(s) lista(s) para guardar.';
             });
         }
 
@@ -436,6 +500,11 @@
 
         form.addEventListener('submit', function () {
             setSignatureField();
+            var submitBtn = form.querySelector('button[type="submit"]');
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = 'Guardando...';
+            }
         });
     })();
 </script>
